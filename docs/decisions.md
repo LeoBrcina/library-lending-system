@@ -113,6 +113,19 @@ A provider-independent interface and deterministic testing stub will allow autom
 | D-036 | Use three ADRs for major decisions and maintain `docs/ai-usage.md`, `docs/ai-evaluation.md` and Figma documentation as the project progresses. | ADR-001, the decision register and AI usage log committed; remaining documentation planned. |
 | D-037 | Use the professor's assignment and uploaded lectures/demos as primary references. For external GitHub source-code reference, use only the two professor-authorized repositories. | Ongoing policy. |
 | D-038 | Do not implement major phases simultaneously; verify before moving forward, keep code paste-ready and review current files before modifying them. | Ongoing workflow policy. |
+| D-047 | Deploy the Spring Boot application on **Render Free** from a Dockerfile, with GitHub integration and public HTTPS access. | Accepted M1 hosting choice; no deployment performed. Free instances may sleep when idle. |
+| D-048 | Use **Neon Free** for managed PostgreSQL in production, keeping PostgreSQL 17 through Docker Compose for local development. Require TLS and environment-supplied production credentials. | Accepted M1 database-hosting choice; no Neon database created or connection tested. |
+| D-049 | Keep deployment spending at **€0**, without entering a payment card or enabling paid services. Verify free-tier conditions and resource limits before creating accounts. | Accepted project constraint; availability and quotas must be rechecked during deployment. |
+| D-050 | Use configurable scheduling: normal calendar-based execution and a short demonstration interval (for example, five seconds). Scheduling frequency must never change the per-calendar-day fine calculation. | Planned; job configuration and tests not implemented. |
+| D-051 | Treat Render Free sleep as an availability limitation: overdue fine processing must reconcile missed dates when execution resumes, with database-backed idempotency and coordination for multiple instances. A five-second demonstration does not prove unattended nightly execution. | Accepted design constraint; final scheduler mechanism and reliability tests pending ADR-003. |
+
+### Hosting decision rationale
+
+Render Free and Neon Free were selected because the professor explicitly recommends this pair as a no-payment-card route to the course's free public deployment requirement. Render can host the Dockerized Spring Boot application behind HTTPS, while Neon supplies a separate managed PostgreSQL database. The target cost is €0, and no paid upgrade is authorized.
+
+The production setup will use a dedicated Spring profile, environment variables for database and Gemini credentials, Flyway migrations, an Actuator health check and a documented public HTTPS URL. Docker build and runtime behavior must be verified locally before deployment. These are planned implementation steps, not completed work.
+
+Render Free may sleep when idle, so JVM-based scheduled tasks cannot be assumed to run at their intended times. We will preserve calendar-based fine calculations, make the job idempotent and reconcile missed dates after resumption. A configurable five-second schedule can demonstrate repeated execution and the absence of duplicate charges during the defense, but does not establish guaranteed overnight execution. The persistence/locking strategy remains to be finalized in ADR-003.
 
 ## 7. Additional course obligations
 
@@ -129,7 +142,7 @@ The following requirements are tracked to prevent omission. Some architectural d
 | Two scheduled jobs and persistent execution/locking strategy | Required for LO7; not started. |
 | Figma low-/high-fidelity prototype, components, interactive flow and responsive views | Required prototype deliverables; not started. |
 | AI evaluation document with at least 10 actual cases | Required final documentation; evaluation not started. |
-| Managed database, HTTPS deployment, CI, performance evidence and recording | Required later deliverables; not yet verified. |
+| Managed database, HTTPS deployment, CI, performance evidence and recording | Render Free + Neon Free selected; actual deployment and evidence not yet verified. |
 
 ## 8. Implementation checkpoints and unresolved decisions
 
@@ -151,11 +164,14 @@ The following requirements are tracked to prevent omission. Some architectural d
 - Gemini 2.5 Flash-Lite is the provisional initial model; Gemini 2.5 Flash is an alternative.
 - Structured AI classification, catalog duplicate suggestions, provider-independent integration and librarian confirmation are planned.
 - No real AI API calls, model evaluation results or AI integration tests have been verified.
+- Render Free is the selected web host and Neon Free the selected managed PostgreSQL service; no deployment has been performed.
+- A configurable five-second defense demonstration is planned for scheduled jobs without modifying calendar-day fine rules.
+- Free-instance sleep and reliable unattended scheduling remain unresolved deployment risks.
 
 ### Still to settle or complete
 
 - Professor's explicit topic acceptance has not been confirmed in the conversation.
-- Select and document the hosting platform and managed PostgreSQL provider for M1.
+- Record the accepted hosting selection and verify account-level free-tier conditions when deployment begins.
 - Design and retain Figma low-fidelity wireframes.
 - Finalize the security permission matrix, entity enum values and transaction locking strategy before implementation.
 - Create migrations, seed data and application functionality in subsequent milestones.

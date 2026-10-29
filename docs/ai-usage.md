@@ -113,6 +113,16 @@ AI-generated suggestions and code are reviewed before being accepted. All implem
 - **Evidence/verification:** The provider decision was accepted during M1 planning. No Gemini API key, live inference result, quota test, model accuracy measurement or deployed AI integration has yet been verified.
 - **Affected artifacts:** `docs/decisions.md` (D-029 and D-039 through D-046); ADR-002 and `docs/ai-evaluation.md` planned for later milestones.
 
+### AI-011 — Select free application hosting and managed PostgreSQL
+
+- **Date:** 2026-10-29.
+- **Prompt/task summary:** Compare hosting and managed PostgreSQL options for the P03 application, verify the professor's recommended deployment technologies and choose a solution without additional university project expenses.
+- **AI contribution:** Compared Render, Neon and other hosting options, then reviewed the professor's deployment section. Identified Render Free with Neon Free as the professor's recommended no-payment-card combination. Explained the deployment workflow and the limitations of running scheduled Spring Boot jobs on sleeping free instances.
+- **Developer contribution:** Set a strict €0 spending requirement and rejected paid hosting and payment-card-based services. Proposed demonstrating daily fine accrual with a shortened execution interval, such as five seconds, during the defense. Accepted Render Free and Neon Free as the hosting choices.
+- **Changes and rationale:** The deployment plan uses Render Free for the Dockerized Spring Boot application and Neon Free for managed PostgreSQL. Production secrets will be supplied through environment variables. Normal fine processing will remain calendar-based, while a configurable short interval will support a practical defense demonstration. Because Render Free may sleep, the fine job must reconcile missed dates when execution resumes and avoid duplicate accruals.
+- **Evidence/verification:** The hosting providers and demonstration approach were accepted during M1 planning and documented in the decision register. No Render service, Neon database, public deployment, live HTTPS connection or scheduled-job test has yet been verified. The five-second demonstration is a planned test strategy, not evidence of reliable unattended nightly execution.
+- **Affected artifacts:** `docs/decisions.md` (D-047 through D-051); production configuration, Dockerfile, scheduler implementation and deployment documentation planned for later milestones.
+
 ## Verified baseline as of 2026-10-29
 
 | Item | Actual evidence |
@@ -123,7 +133,8 @@ AI-generated suggestions and code are reviewed before being accepted. All implem
 | Runtime | Spring Boot 4.1.2 connected to PostgreSQL from Git Bash and IntelliJ; Tomcat listened on port 8080. |
 | HTTP | `curl` returned HTTP 404 at `/`, expected because no controller exists. |
 | Git | Seven logical commits preserved after history rewriting. Local and remote `main` were verified synchronized at commit `a93be36`. |
-| AI provider | Google Gemini selected and documented as the accepted M1 provider; integration not yet implemented. |
+| AI provider | Google Gemini accepted as the M1 provider; integration not yet implemented. |
+| Deployment providers | Render Free and Neon Free selected during M1; neither service has been configured or tested. |
 
 ## Not yet implemented or verified
 
@@ -132,3 +143,5 @@ The application does not yet have domain entities, repositories, CRUD controller
 No test execution, coverage percentage, AI accuracy metric or deployment result should be inferred from the successful empty-application build.
 
 Google Gemini has been selected as the provider, but no real API calls have been made. Gemini 2.5 Flash-Lite is the provisional initial model, with Gemini 2.5 Flash as an alternative. Model availability, quotas, cost conditions and classification quality must be checked during implementation.
+
+Render Free and Neon Free have been selected for deployment under the €0 spending constraint. Their actual resource limits, service availability and application compatibility must be verified before deployment. Render Free sleep means unattended scheduled execution is not guaranteed; the planned scheduler must use persistent coordination and catch-up processing to avoid missed or duplicate fines.
