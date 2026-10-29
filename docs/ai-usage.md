@@ -3,7 +3,7 @@
 **Project:** P03 Library Lending System  
 **Course:** Rapid Development of Java Applications Using Programming Frameworks (2026/27)  
 **Started:** 2026-10-29  
-**Last updated:** 2026-10-29
+**Last updated:** 2026-10-30
 
 ## Purpose and reporting rules
 
@@ -20,7 +20,7 @@ AI-generated suggestions and code are reviewed before being accepted. All implem
 - **AI contribution:** Structured the required title/copy/loan/member and reservation domain, security, persistence, REST/API, AI, testing, internationalization, scheduler, deployment and documentation work into milestone-sized tasks.
 - **Developer contribution:** Chose the public-library scope, hybrid physical checkout/return, member dashboard and stepwise development and commit workflow; required the official assignment to be treated as authoritative.
 - **Changes and rationale:** The plan was narrowed to a public library with staff-managed physical circulation, rather than an unrestricted self-service borrowing system, to reflect the chosen real-world workflow. The developer also required one verified milestone step at a time to keep the project explainable.
-- **Evidence/verification:** The project plan and subsequent ERD/ADR discussions were reviewed conversationally. Professor approval of the topic has not been independently confirmed.
+- **Evidence/verification:** The project plan and subsequent ERD/ADR discussions were reviewed conversationally. The developer confirmed acceptance of the assigned P03 topic; no separate professor sign-off was independently verified.
 - **Affected artifacts:** Planning decisions captured in `docs/decisions.md` and `docs/adr/001-persistence-model.md`.
 
 ### AI-002 — Define business policies and logical data model
@@ -123,7 +123,18 @@ AI-generated suggestions and code are reviewed before being accepted. All implem
 - **Evidence/verification:** The hosting providers and demonstration approach were accepted during M1 planning and documented in the decision register. No Render service, Neon database, public deployment, live HTTPS connection or scheduled-job test has yet been verified. The five-second demonstration is a planned test strategy, not evidence of reliable unattended nightly execution.
 - **Affected artifacts:** `docs/decisions.md` (D-047 through D-051); production configuration, Dockerfile, scheduler implementation and deployment documentation planned for later milestones.
 
-## Verified baseline as of 2026-10-29
+### AI-012 — Generate and review M1 Figma wireframes
+
+- **Date:** 2026-10-29 to 2026-10-30.
+- **Prompt/task summary:** Review the professor's Figma requirements and laboratory UI examples, create a minimal screen inventory for the P03 Library Lending System and use Figma AI Agent to generate the M1 low-fidelity wireframes.
+- **AI contribution:** Interpreted the prototype specification, compared the professor's demonstrated Spring Boot interfaces and Figma Make example, proposed a lean screen inventory and prepared a detailed generation prompt covering the public catalog, member functions, librarian workflows, physical copy management, AI-assisted acquisition review and administration. Subsequently reviewed screenshots of the generated designs against the agreed domain and business rules.
+- **Developer contribution:** Activated the Figma Education plan, created the design file and its three pages, used Figma AI Agent to generate the wireframes, examined the generated screens, supplied screenshots for review, inspected the editable layer hierarchy and exported the low-fidelity material as four PDFs. Preferred to keep the application scope manageable rather than turn additional generated screens into unnecessary implementation requirements.
+- **Changes and rationale:** The initial proposal of more than 20 main screens was reduced to 11 core layouts and three focused state variations. This provides coverage of the main workflows while allowing shared layouts and Thymeleaf templates during implementation. The low-fidelity designs remain grayscale and separate from the planned components and high-fidelity screens. AI-assisted generation was preferred to manual drawing to reduce design time while preserving human review.
+- **Evidence/verification:** Screenshots showed 11 principal layouts and three state variations, organized into Public and Member, Librarian, Administrator and State Variations groups. A Figma Layers panel screenshot showed individual editable frames, text layers and nested layout elements. The designs were reviewed for relevant business rules, including physical librarian checkout/return, renewal restrictions, reservations, daily fines and human confirmation of Gemini suggestions. The developer reported exporting four PDF files. Their final contents and Git inclusion have not yet been independently verified. Figma public-link accessibility also remains to be confirmed.
+- **Affected artifacts:** Figma design file, `01 - Low-Fidelity Wireframes` page and the four PDF exports intended for `docs/wireframes-m1/`. The `02 - Components` and `03 - High-Fidelity Screens` pages are reserved for later milestones.
+- **Figma link:** https://www.figma.com/design/PiQSnO17vQGKHeqz3ktlb1/P03-Library-Lending-System---UI-UX-Prototype
+
+## Verified baseline as of 2026-10-30
 
 | Item | Actual evidence |
 |---|---|
@@ -132,9 +143,12 @@ AI-generated suggestions and code are reviewed before being accepted. All implem
 | Database | PostgreSQL 17.11 in a healthy Docker container; SQL connection returned expected database and user. |
 | Runtime | Spring Boot 4.1.2 connected to PostgreSQL from Git Bash and IntelliJ; Tomcat listened on port 8080. |
 | HTTP | `curl` returned HTTP 404 at `/`, expected because no controller exists. |
-| Git | Seven logical commits preserved after history rewriting. Local and remote `main` were verified synchronized at commit `a93be36`. |
+| Git | Seven logical commits preserved after history rewriting. Local and remote `main` were verified synchronized at commit `a93be36`. Later documentation and wireframe commits have not been verified in this record. |
 | AI provider | Google Gemini accepted as the M1 provider; integration not yet implemented. |
 | Deployment providers | Render Free and Neon Free selected during M1; neither service has been configured or tested. |
+| Figma wireframes | 11 core layouts and three state variations reviewed through screenshots. Editable native Figma layers were visually verified. |
+| Figma export | Developer reported four PDF exports; repository placement and PDF contents await verification. |
+| Topic | Developer confirmed acceptance of the assigned P03 Library Lending System topic. |
 
 ## Not yet implemented or verified
 
@@ -145,3 +159,7 @@ No test execution, coverage percentage, AI accuracy metric or deployment result 
 Google Gemini has been selected as the provider, but no real API calls have been made. Gemini 2.5 Flash-Lite is the provisional initial model, with Gemini 2.5 Flash as an alternative. Model availability, quotas, cost conditions and classification quality must be checked during implementation.
 
 Render Free and Neon Free have been selected for deployment under the €0 spending constraint. Their actual resource limits, service availability and application compatibility must be verified before deployment. Render Free sleep means unattended scheduled execution is not guaranteed; the planned scheduler must use persistent coordination and catch-up processing to avoid missed or duplicate fines.
+
+The M1 low-fidelity Figma wireframes have been generated and visually reviewed. Their editable structure was confirmed through the Figma Layers panel. The four exported PDFs and public sharing configuration should be verified before treating the prototype evidence as fully finalized.
+
+High-fidelity screens, reusable Figma components, responsive layouts, a clickable prototype, design rationale and the final `docs/prototype.pdf` remain later deliverables.
