@@ -7,7 +7,11 @@
 
 ## Purpose and authority
 
-This register captures the decisions agreed during project planning and M1 setup so that later implementation remains consistent. The professor's official assignment takes precedence if any entry conflicts with a mandatory requirement. This register is a project management aid, not a substitute for the official assignment or an implementation checklist. An **accepted** decision means the team has chosen an approach, not that it has been implemented or tested. Changes must be explicitly discussed and recorded here and, for major architectural changes, in an Architecture Decision Record (ADR).
+This register captures the decisions agreed during project planning and development so that later implementation remains consistent.
+
+The professor's official assignment takes precedence if any entry conflicts with a mandatory requirement. This register is a project management aid, not a substitute for the official assignment or an implementation checklist.
+
+An **accepted** decision means the team has chosen an approach, not that it has necessarily been implemented or tested. Changes must be explicitly discussed and recorded here and, for major architectural changes, in an Architecture Decision Record (ADR).
 
 ## 1. Domain and user experience
 
@@ -57,13 +61,46 @@ This register captures the decisions agreed during project planning and M1 setup
 | D-027 | Default to lazy JPA fetching where appropriate and apply fetch joins/entity graphs for specific use cases. Document an N+1 before/after SQL comparison. | Planned, required by LO4. |
 | D-028 | Keep web controllers, service logic and repositories separate. Use constructor injection, DTOs/forms, validation and suitable exception handling. | Architecture policy; feature code not yet implemented. |
 
-## 5. AI purchases and scheduling
+## 5. AI purchase suggestions and scheduling
 
 | ID | Accepted decision | Implementation status / notes |
 |---|---|---|
-| D-029 | Members may submit free-text purchase suggestions. AI will propose subject categories and flag likely duplicate titles already held by the library. An acquisitions librarian makes the final decision. | P03 requirement; provider and implementation not yet selected. |
-| D-030 | Retain multiple AI evaluation results per purchase suggestion and keep AI output separate from the final human review record. | ER diagram design. |
+| D-029 | Members may submit free-text purchase suggestions. AI will propose subject categories and flag likely duplicate titles already held by the library. An acquisitions librarian makes the final decision. | P03 requirement; Google Gemini selected as provider. Feature not implemented. |
+| D-030 | Retain multiple AI analysis results per purchase suggestion and keep AI output separate from the final human review record. | ER diagram design; database tables not yet implemented. |
 | D-031 | Nightly fine accrual must be idempotent. Scheduling must also be safe when multiple application instances are running; select Quartz JDBC persistence or documented distributed locking. | Scheduler approach not yet selected; ADR-003 planned. |
+| D-039 | Use **Google Gemini API** as the primary AI provider for the P03 purchase-suggestion feature. | Accepted during M1; API access and integration not yet verified. |
+| D-040 | Start evaluation with **Gemini 2.5 Flash-Lite**, with **Gemini 2.5 Flash** as an alternative if necessary. The final model will depend on availability, quotas and evaluation results. | Provisional model selection; no live API evaluation performed. |
+| D-041 | Supply the AI model with the member's suggestion, permitted subject categories and a shortlist of relevant existing catalog titles. Do not rely on the model to know the library's inventory independently. | Planned integration approach. Catalog retrieval and candidate selection not implemented. |
+| D-042 | Require structured AI output containing suggested subject categories and possible duplicate candidates. Validate returned categories and title identifiers against application data before accepting the result. | Planned; final JSON schema and validation rules pending ADR-002. |
+| D-043 | Use a provider-independent Java interface separating AI integration from business logic, with a deterministic stub implementation for automated tests. | Planned; interface and stub not implemented. |
+| D-044 | AI output is advisory. The acquisitions librarian must review the results and record the final decision. AI must not independently approve purchases or modify catalog records. | Accepted workflow; not implemented. |
+| D-045 | Keep AI credentials outside version control, minimize personal data sent to the provider, cap requests and handle timeouts, quota exhaustion and invalid responses. | Architectural policy; actual configuration and safeguards not implemented. |
+| D-046 | Evaluate the real AI integration using at least 10 documented cases, including English and Croatian suggestions, exact and approximate duplicates, ambiguous inputs and suggestions without matches. | Planned; actual results will be recorded in `docs/ai-evaluation.md`. |
+
+### AI provider decision rationale
+
+Google Gemini was selected because the P03 AI task is relatively lightweight and structured.
+
+The application needs to classify member purchase suggestions into predefined subject categories and identify possible duplicates among relevant existing catalog titles. It does not require training a custom model, maintaining a vector database or building an autonomous agent.
+
+Gemini was considered suitable because it supports text analysis and structured responses. Eligible free-tier API access may also reduce the cost of development and evaluation.
+
+The provider choice does not guarantee that every model will be free, available or sufficiently accurate. These conditions must be verified against the actual API account and model behavior during implementation.
+
+The planned approach is:
+
+1. A member submits a title and free-text purchase suggestion.
+2. The application stores the suggestion and retrieves relevant catalog candidates.
+3. The AI adapter sends the suggestion, valid categories and candidate titles to Gemini.
+4. The application validates the structured result and stores the analysis.
+5. An acquisitions librarian reviews the proposed categories and duplicate flags.
+6. The librarian records the final decision independently of the AI output.
+
+The application must support the required AI feature through both the Thymeleaf interface and a REST endpoint.
+
+A provider-independent interface and deterministic testing stub will allow automated tests without live API calls. Actual evaluation of the real provider will be documented separately.
+
+**ADR-002: AI Integration and Human Review** will contain the detailed technical design, alternatives, response schema, error handling and verification strategy.
 
 ## 6. Technology, repository and workflow
 
@@ -71,33 +108,34 @@ This register captures the decisions agreed during project planning and M1 setup
 |---|---|---|
 | D-032 | Use Java 25, Spring Boot 4.1, Maven Wrapper and IntelliJ IDEA. | Java 25.0.5, IntelliJ IDEA 2026.2.3, Spring Boot 4.1.2 and Maven Wrapper 3.10.0 verified locally. |
 | D-033 | Use PostgreSQL 17 in Docker Compose for local development, with host-only binding on `127.0.0.1:5433` and a dedicated persistent named volume. | Docker container was observed healthy and SQL connection verified (2026-10-29). |
-| D-034 | Manage local credentials through an ignored `.env` file for Docker and a local IntelliJ run configuration for Spring Boot; never commit actual database passwords. The IDE configuration may store a locally readable password and must not be shared. Commit `.env.example`. | Implemented in initial setup; repository history review for all secrets remains an ongoing responsibility. |
-| D-035 | Use GitHub repository `LeoBrcina/library-lending-system` and small, descriptive commits without conventional prefixes. | Five commits pushed and `main` synced as of 2026-10-29. |
-| D-036 | Use three ADRs for major decisions and maintain `docs/ai-usage.md`, `docs/ai-evaluation.md` and Figma documentation as the project progresses. | ADR-001 committed; decision register and AI usage log drafted for review; other documentation planned. |
+| D-034 | Manage local credentials through an ignored `.env` file for Docker and a local IntelliJ run configuration for Spring Boot; never commit actual database passwords. The IDE configuration may store a locally readable password and must not be shared. Commit `.env.example` with placeholders only. | Implemented in initial setup. An actual password was previously committed to `.env.example`; the Git history was rewritten and force-pushed to replace it with a placeholder. The old password was not rotated and must still be considered potentially exposed. |
+| D-035 | Use GitHub repository `LeoBrcina/library-lending-system` and small, descriptive commits without conventional prefixes. | Seven logical commits preserved after the history rewrite; `main` synchronized with `origin/main` as last verified on 2026-10-29. |
+| D-036 | Use three ADRs for major decisions and maintain `docs/ai-usage.md`, `docs/ai-evaluation.md` and Figma documentation as the project progresses. | ADR-001, the decision register and AI usage log committed; remaining documentation planned. |
 | D-037 | Use the professor's assignment and uploaded lectures/demos as primary references. For external GitHub source-code reference, use only the two professor-authorized repositories. | Ongoing policy. |
 | D-038 | Do not implement major phases simultaneously; verify before moving forward, keep code paste-ready and review current files before modifying them. | Ongoing workflow policy. |
 
-## 7. Additional course obligations (not yet implementation decisions)
+## 7. Additional course obligations
 
-The following items are required by the professor and are tracked here to prevent omission; their implementation details have **not** been agreed or verified:
+The following requirements are tracked to prevent omission. Some architectural decisions have been accepted, but the corresponding implementation has not yet been completed.
 
 | Requirement | Current position |
 |---|---|
 | Spring Security 7, BCrypt, CSRF, three roles and service-level authorization | Required for LO2; permissions matrix pending. |
 | REST API with DTOs, pagination, sorting, status codes and ProblemDetail | Required for LO5; endpoint design pending. |
-| AI feature accessible from both a screen and an endpoint | Required for LO5; provider and adapter pending. |
+| AI feature accessible from both a screen and an endpoint | Required for LO5; Google Gemini selected, implementation pending. |
+| Provider-independent AI integration and deterministic stub tests | Approach accepted; implementation pending. |
 | JUnit 6, Mockito, MVC/repository/Testcontainers tests and JaCoCo service coverage | Required for LO6; no passing test result or coverage evidence yet. |
 | Croatian/English internationalization, including validation, date and number formatting | Required for LO7; not started. |
 | Two scheduled jobs and persistent execution/locking strategy | Required for LO7; not started. |
 | Figma low-/high-fidelity prototype, components, interactive flow and responsive views | Required prototype deliverables; not started. |
-| AI evaluation document with at least 10 actual cases | Required final documentation; not started. |
+| AI evaluation document with at least 10 actual cases | Required final documentation; evaluation not started. |
 | Managed database, HTTPS deployment, CI, performance evidence and recording | Required later deliverables; not yet verified. |
 
 ## 8. Implementation checkpoints and unresolved decisions
 
-**Verified M1 technical baseline (2026-10-29):**
+### Verified M1 technical baseline (2026-10-29)
 
-- Git repository created with five commits pushed to `origin/main`.
+- Git repository created with seven logical commits on `main`, synchronized with `origin/main` after the history rewrite.
 - Java 25.0.5 and Maven Wrapper 3.10.0 verified.
 - Spring Boot 4.1.2 built successfully with tests deliberately skipped.
 - PostgreSQL 17.11 reported healthy through Docker Compose.
@@ -105,17 +143,25 @@ The following items are required by the professor and are tracked here to preven
 - Spring Boot connected successfully through HikariCP and initialized Flyway and Hibernate.
 - Application started through Git Bash and IntelliJ IDEA.
 - HTTP request to `/` returned an expected 404 because no controller exists.
+- The Git history containing the Docker Compose commit was rewritten to replace the exposed `.env.example` password with a placeholder, and the new remote branch was verified.
 
-**Still to settle or complete:**
+### Accepted decisions not yet implemented
+
+- Google Gemini is the selected AI provider.
+- Gemini 2.5 Flash-Lite is the provisional initial model; Gemini 2.5 Flash is an alternative.
+- Structured AI classification, catalog duplicate suggestions, provider-independent integration and librarian confirmation are planned.
+- No real AI API calls, model evaluation results or AI integration tests have been verified.
+
+### Still to settle or complete
 
 - Professor's explicit topic acceptance has not been confirmed in the conversation.
-- Select and record the AI provider and hosting platform for M1.
+- Select and document the hosting platform and managed PostgreSQL provider for M1.
 - Design and retain Figma low-fidelity wireframes.
-- Finalize security permissions, entity enum values and transaction locking strategy before implementation.
-- Create migrations, seed data and all application functionality in subsequent milestones.
-- Keep `docs/ai-usage.md` current and create the remaining required AI and architecture documentation.
-
-**Working tree note:** The latest reported local `git status` showed an unstaged Markdown formatting change to `docs/adr/001-persistence-model.md`. It was not part of the datasource configuration commit.
+- Finalize the security permission matrix, entity enum values and transaction locking strategy before implementation.
+- Create migrations, seed data and application functionality in subsequent milestones.
+- Create ADR-002 for detailed AI integration design and ADR-003 for persistent scheduling.
+- Implement and evaluate the actual AI integration, recording at least 10 genuine cases.
+- Keep `docs/ai-usage.md` current and complete the remaining required documentation.
 
 ## 9. Change management
 
@@ -126,4 +172,4 @@ For each new or revised decision:
 3. Verify the resulting behavior where implementation exists.
 4. Make a focused Git commit after review.
 
-Do not present planned items as completed or infer test success from a successful compilation.
+Do not present planned items as completed or infer test success from successful compilation.
