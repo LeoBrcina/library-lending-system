@@ -1,191 +1,187 @@
+
 # Project Decision Register
 
 **Project:** P03 Library Lending System  
 **Course:** Rapid Development of Java Applications Using Programming Frameworks (2026/27)  
-**Last updated:** 2026-10-29  
-**Status:** Working register of accepted decisions; implementation status is tracked separately.
+**Last updated:** 2026-11-05
 
-## Purpose and authority
-
-This register captures the decisions agreed during project planning and development so that later implementation remains consistent.
-
-The professor's official assignment takes precedence if any entry conflicts with a mandatory requirement. This register is a project management aid, not a substitute for the official assignment or an implementation checklist.
-
-An **accepted** decision means the team has chosen an approach, not that it has necessarily been implemented or tested. Changes must be explicitly discussed and recorded here and, for major architectural changes, in an Architecture Decision Record (ADR).
+The professor's official assignment takes precedence over project decisions. An accepted decision does not necessarily mean that the corresponding feature has been implemented.
 
 ## 1. Domain and user experience
 
 | ID | Accepted decision | Implementation status / notes |
 |---|---|---|
-| D-001 | Model a public library rather than a commercial lending service. | Planned domain. |
+| D-001 | Model a public library rather than a commercial lending service. | Accepted domain. |
 | D-002 | Use a hybrid physical-lending workflow: librarians perform checkout and return; members can browse, reserve and renew online. | Planned. |
-| D-003 | Provide a member dashboard showing active and previous loans, reservations, fine information and purchase suggestions. | Planned; screen details to be designed in Figma. |
-| D-004 | Provide three roles: `MEMBER`, `LIBRARIAN` and `ADMIN`, with genuinely different permissions. A staff user can also borrow when granted `MEMBER` privileges and is subject to ordinary borrowing rules. | Planned; final authorization matrix to be documented before security implementation. |
-| D-005 | Track the issuing librarian and, when a loan is returned, the returning librarian. | Represented in ER diagram; not implemented. |
+| D-003 | Provide a member dashboard showing active and previous loans, reservations, fine information and purchase suggestions. | M1 wireframe prepared; implementation planned. |
+| D-004 | Provide three roles: `MEMBER`, `LIBRARIAN` and `ADMIN`, with different permissions. Staff may also borrow when assigned the `MEMBER` role. | All three roles seeded in V3; security implementation pending. |
+| D-005 | Track the issuing librarian and, when a loan is returned, the returning librarian. | Foreign keys created in V1. V2 requires return timestamp and returning staff to be recorded together. |
 
 ## 2. Borrowing, renewals and fines
 
 | ID | Accepted decision | Implementation status / notes |
 |---|---|---|
-| D-006 | Standard loan period: **21 days**. | Planned. |
-| D-007 | Maximum **five simultaneously active loans** per member. | Planned. |
-| D-008 | A renewal extends the current due date by **14 days**; maximum **two renewals** per loan. | Planned. |
-| D-009 | Do not renew overdue loans or loans whose title has an active reservation by another member. | Planned; aligns with P03 advanced renewal requirement. |
-| D-010 | Fine: **€0.20 per loan per overdue calendar date** in the `Europe/Zagreb` time zone; a book is due through the end of its due date. Returning on an overdue date incurs that date's charge. | Planned; see ADR-001 for precise accrual/reconciliation policy. |
-| D-011 | Outstanding unpaid fines do **not independently** block new borrowing. Other borrowing restrictions still apply. | Planned. |
-| D-012 | Store fines as daily `FineAccrual` records, unique on (`LoanId`, `AccrualDate`). Nightly calculation and return processing reconcile missing charges without duplicating them. | Planned; idempotency must be proved with tests. |
+| D-006 | Standard loan period: **21 days**. | Service implementation planned. |
+| D-007 | Maximum **five simultaneously active loans** per member. | Service implementation planned. |
+| D-008 | A renewal extends the current due date by **14 days**; maximum **two renewals** per loan. | V1 constrains renewal count to 0–2. Renewal logic pending. |
+| D-009 | Do not renew overdue loans or loans whose title has an active reservation by another member. | Service implementation planned. |
+| D-010 | Fine: **€0.20 per loan per overdue calendar date** in `Europe/Zagreb`; a book is due through the end of its due date. Returning on an overdue date incurs that date's charge. | Fine calculation and reconciliation pending. |
+| D-011 | Outstanding unpaid fines do **not independently** block new borrowing. | Service implementation planned. |
+| D-012 | Store fines as daily `FineAccrual` records, unique on (`LoanId`, `AccrualDate`). Nightly calculation and return processing reconcile missing charges without duplicates. | Table and unique constraint implemented in V1. Scheduling and reconciliation pending. |
 
 ## 3. Reservations and inventory
 
 | ID | Accepted decision | Implementation status / notes |
 |---|---|---|
-| D-013 | Members can reserve a title **only when there are no borrowable copies** of that title. Reservations are title-level, not copy-level at creation. | Planned. |
-| D-014 | Waiting-list order is determined by `RequestedAt`, then `Id` (FIFO with deterministic tie-break). | Planned. |
-| D-015 | When a copy becomes available, automatically allocate it to the first eligible waiting reservation. | Planned; concurrency safeguards required. |
-| D-016 | An allocated reservation has a **three-day pickup deadline**. Expired holds release the copy and promote the next eligible member. | Planned; precise timestamp handling to be tested. |
-| D-017 | If an allocated copy is damaged or unavailable before pickup, the affected reservation keeps its original queue priority while allocation is reconsidered. | Planned. |
-| D-018 | Keep `BookCopy.CopyCondition` separate from `BookCopy.Status`; status describes availability/workflow, condition describes physical quality. | ER diagram design; enum values still to be finalized. |
-| D-019 | `BookTitle.Authors` is text; ISBN is optional. | ER diagram design. |
-| D-020 | A fulfilled reservation can be linked to its resulting loan through nullable, unique `Loans.ReservationId`. | ER diagram design; database constraint not yet implemented. |
+| D-013 | Members can reserve a title **only when no borrowable copies are available**. Reservations are created at title level. | Service implementation planned. |
+| D-014 | Waiting-list order uses `RequestedAt`, then `Id`, for deterministic FIFO ordering. | Supporting index created in V1; allocation algorithm pending. |
+| D-015 | Automatically allocate an available copy to the first eligible waiting reservation. | Transactional service implementation planned. |
+| D-016 | Allocated reservations have a **three-day pickup deadline**. Expired holds release the copy and promote the next eligible member. | Deadline and expiration logic pending. |
+| D-017 | If an allocated copy becomes damaged or unavailable before pickup, the reservation retains its original queue priority while allocation is reconsidered. | Service implementation planned. |
+| D-018 | Keep `BookCopy.CopyCondition` separate from `BookCopy.Status`. Status represents circulation availability; condition represents physical quality. | Separate columns implemented in V1. Final enum values and lending policy pending. |
+| D-019 | Store `BookTitle.Authors` as text and allow ISBN to be optional. | Implemented in V1. |
+| D-020 | Link fulfilled reservations to loans using nullable, unique `Loans.ReservationId`. | Foreign key and unique constraint implemented in V1. Fulfillment logic pending. |
 
 ## 4. Persistence and integrity
 
 | ID | Accepted decision | Implementation status / notes |
 |---|---|---|
-| D-021 | Use PostgreSQL with Spring Data JPA, Hibernate 7, Flyway and HikariCP. | PostgreSQL connection and framework startup verified; migrations and entities not implemented. See ADR-001. |
-| D-022 | Use 12 logical application tables: `BookTitles`, `BookCopies`, `Categories`, `BookCategories`, `AppUsers`, `Roles`, `UserRoles`, `Loans`, `FineAccruals`, `Reservations`, `PurchaseSuggestions` and `AiSuggestionResults`. | ER diagram saved and committed; database tables not yet created. |
-| D-023 | Use singular PascalCase Java entity classes, plural PascalCase logical SQL table names and PascalCase logical column names. Accept PostgreSQL lowercase folding for unquoted identifiers; map consistently in JPA and migrations. | Planned; physical naming strategy to be verified when migrations begin. |
-| D-024 | Use `BookCategories` as an attributed association entity with `IsPrimary`; enforce at most one primary category per title. | ER diagram design; constraints pending. |
-| D-025 | Preserve loans, fine accruals and important reservation history. Allow physical deletion where safe; use withdrawal/deactivation and reject deletion where protected history exists. | Planned; cascade rules to be determined per relationship. |
-| D-026 | Use service-level transaction boundaries, database constraints and carefully planned locking for checkout, renewal, return and reservation allocation. | Architectural decision only; lock acquisition order and concurrency tests pending. |
-| D-027 | Default to lazy JPA fetching where appropriate and apply fetch joins/entity graphs for specific use cases. Document an N+1 before/after SQL comparison. | Planned, required by LO4. |
-| D-028 | Keep web controllers, service logic and repositories separate. Use constructor injection, DTOs/forms, validation and suitable exception handling. | Architecture policy; feature code not yet implemented. |
+| D-021 | Use PostgreSQL with Spring Data JPA, Hibernate 7, Flyway and HikariCP. | PostgreSQL 17.11 and Flyway V1–V3 verified. JPA entity mappings and repositories pending. See ADR-001. |
+| D-022 | Use 12 application tables: `BookTitles`, `BookCopies`, `Categories`, `BookCategories`, `AppUsers`, `Roles`, `UserRoles`, `Loans`, `FineAccruals`, `Reservations`, `PurchaseSuggestions` and `AiSuggestionResults`. | All 12 tables created by V1 and verified in PostgreSQL. |
+| D-023 | Use singular PascalCase Java entities, plural PascalCase logical SQL table names and PascalCase logical column names. PostgreSQL lowercase folding is accepted; JPA mappings must match. | SQL naming verified through PostgreSQL inspection. Java mappings pending. |
+| D-024 | Model `BookCategories` as an attributed association entity with `IsPrimary`. Allow at most one primary category per title. | Composite primary key and partial unique index implemented in V1. |
+| D-025 | Preserve loans, fine accruals and important reservation history. Allow physical deletion where safe; use withdrawal or deactivation when history must be retained. | Restrictive foreign keys implemented in V1; historical allocation references supported by V2. Service deletion rules pending. |
+| D-026 | Use service-level transactions, database constraints and suitable locking for checkout, renewal, return and reservation allocation. | Selected constraints implemented in V1–V2. Six negative SQL tests reported passing. Transactions and concurrency tests pending. |
+| D-027 | Prefer lazy JPA fetching and use fetch joins or entity graphs when needed. Document an N+1 problem and its before/after SQL. | Planned for JPA implementation. |
+| D-028 | Separate controllers, services and repositories. Use constructor injection, DTOs/forms, validation and appropriate exception handling. | Architecture policy; implementation pending. |
+| D-052 | Keep applied Flyway versioned migrations unchanged. Use new migrations for later schema modifications. | Applied during V1–V3 development. |
+| D-053 | Separate permanent reference data from development-only demonstration data. Do not include default user credentials or date-dependent demonstration records in production migrations. | V3 contains three roles and ten categories. Development fixtures pending. |
 
 ## 5. AI purchase suggestions and scheduling
 
 | ID | Accepted decision | Implementation status / notes |
 |---|---|---|
-| D-029 | Members may submit free-text purchase suggestions. AI will propose subject categories and flag likely duplicate titles already held by the library. An acquisitions librarian makes the final decision. | P03 requirement; Google Gemini selected as provider. Feature not implemented. |
-| D-030 | Retain multiple AI analysis results per purchase suggestion and keep AI output separate from the final human review record. | ER diagram design; database tables not yet implemented. |
-| D-031 | Nightly fine accrual must be idempotent. Scheduling must also be safe when multiple application instances are running; select Quartz JDBC persistence or documented distributed locking. | Scheduler approach not yet selected; ADR-003 planned. |
-| D-039 | Use **Google Gemini API** as the primary AI provider for the P03 purchase-suggestion feature. | Accepted during M1; API access and integration not yet verified. |
-| D-040 | Start evaluation with **Gemini 2.5 Flash-Lite**, with **Gemini 2.5 Flash** as an alternative if necessary. The final model will depend on availability, quotas and evaluation results. | Provisional model selection; no live API evaluation performed. |
-| D-041 | Supply the AI model with the member's suggestion, permitted subject categories and a shortlist of relevant existing catalog titles. Do not rely on the model to know the library's inventory independently. | Planned integration approach. Catalog retrieval and candidate selection not implemented. |
-| D-042 | Require structured AI output containing suggested subject categories and possible duplicate candidates. Validate returned categories and title identifiers against application data before accepting the result. | Planned; final JSON schema and validation rules pending ADR-002. |
-| D-043 | Use a provider-independent Java interface separating AI integration from business logic, with a deterministic stub implementation for automated tests. | Planned; interface and stub not implemented. |
-| D-044 | AI output is advisory. The acquisitions librarian must review the results and record the final decision. AI must not independently approve purchases or modify catalog records. | Accepted workflow; not implemented. |
-| D-045 | Keep AI credentials outside version control, minimize personal data sent to the provider, cap requests and handle timeouts, quota exhaustion and invalid responses. | Architectural policy; actual configuration and safeguards not implemented. |
-| D-046 | Evaluate the real AI integration using at least 10 documented cases, including English and Croatian suggestions, exact and approximate duplicates, ambiguous inputs and suggestions without matches. | Planned; actual results will be recorded in `docs/ai-evaluation.md`. |
+| D-029 | Members submit free-text purchase suggestions. AI proposes categories and possible duplicate titles; an acquisitions librarian makes the final decision. | Google Gemini selected; feature pending. |
+| D-030 | Retain multiple AI analysis results for a purchase suggestion and keep AI output separate from the librarian's decision. | `PurchaseSuggestions` and `AiSuggestionResults` tables implemented in V1. Workflow pending. |
+| D-031 | Nightly fine accrual must be idempotent and safe across multiple application instances. Use Quartz JDBC persistence or documented distributed locking. | Scheduler design pending ADR-003. |
+| D-039 | Use **Google Gemini API** as the primary AI provider. | Accepted; integration not implemented. |
+| D-040 | Start evaluation with **Gemini 2.5 Flash-Lite**, with **Gemini 2.5 Flash** as a possible alternative. | Provisional choice; live availability and behavior not verified. |
+| D-041 | Supply Gemini with the member's suggestion, permitted categories and relevant existing catalog titles. Do not assume the model knows the library inventory. | Planned. |
+| D-042 | Require structured AI output containing category suggestions and possible duplicate candidates. Validate category and title identifiers before accepting results. | Planned; response schema pending ADR-002. |
+| D-043 | Separate AI integration from business logic through a provider-independent Java interface and a deterministic test stub. | Planned. |
+| D-044 | AI output is advisory. A librarian must confirm the final decision; AI must not independently approve purchases or change catalog records. | Planned. |
+| D-045 | Keep AI credentials outside Git, limit personal data, control request volume and handle timeouts, quotas and invalid responses. | Planned. |
+| D-046 | Evaluate the live AI integration with at least ten documented cases, including English/Croatian suggestions, duplicates, ambiguous inputs and unmatched titles. | Evaluation pending in `docs/ai-evaluation.md`. |
 
-### AI provider decision rationale
+### AI provider rationale
 
-Google Gemini was selected because the P03 AI task is relatively lightweight and structured.
+Google Gemini was selected for the purchase-suggestion feature because the task involves text classification and comparison against a limited set of catalog records.
 
-The application needs to classify member purchase suggestions into predefined subject categories and identify possible duplicates among relevant existing catalog titles. It does not require training a custom model, maintaining a vector database or building an autonomous agent.
+The application will provide valid library categories and relevant existing titles to the model. The result will be checked against application data before storage, and a librarian will make the final decision.
 
-Gemini was considered suitable because it supports text analysis and structured responses. Eligible free-tier API access may also reduce the cost of development and evaluation.
+A custom-trained model or vector database is not required for the initial scope. Exact model availability, free-tier limits and classification quality will be checked during implementation.
 
-The provider choice does not guarantee that every model will be free, available or sufficiently accurate. These conditions must be verified against the actual API account and model behavior during implementation.
+The planned workflow is:
 
-The planned approach is:
-
-1. A member submits a title and free-text purchase suggestion.
+1. A member submits a title and description.
 2. The application stores the suggestion and retrieves relevant catalog candidates.
-3. The AI adapter sends the suggestion, valid categories and candidate titles to Gemini.
-4. The application validates the structured result and stores the analysis.
-5. An acquisitions librarian reviews the proposed categories and duplicate flags.
-6. The librarian records the final decision independently of the AI output.
+3. The AI adapter sends the permitted categories and candidate titles with the suggestion.
+4. The response is validated and saved.
+5. A librarian reviews the suggested categories and duplicate candidates.
+6. The librarian records the decision independently.
 
-The application must support the required AI feature through both the Thymeleaf interface and a REST endpoint.
+The AI feature must be accessible through both a Thymeleaf screen and a REST endpoint.
 
-A provider-independent interface and deterministic testing stub will allow automated tests without live API calls. Actual evaluation of the real provider will be documented separately.
-
-**ADR-002: AI Integration and Human Review** will contain the detailed technical design, alternatives, response schema, error handling and verification strategy.
+ADR-002 will document the provider interface, structured output, error handling and verification approach.
 
 ## 6. Technology, repository and workflow
 
 | ID | Accepted decision | Implementation status / notes |
 |---|---|---|
-| D-032 | Use Java 25, Spring Boot 4.1, Maven Wrapper and IntelliJ IDEA. | Java 25.0.5, IntelliJ IDEA 2026.2.3, Spring Boot 4.1.2 and Maven Wrapper 3.10.0 verified locally. |
-| D-033 | Use PostgreSQL 17 in Docker Compose for local development, with host-only binding on `127.0.0.1:5433` and a dedicated persistent named volume. | Docker container was observed healthy and SQL connection verified (2026-10-29). |
-| D-034 | Manage local credentials through an ignored `.env` file for Docker and a local IntelliJ run configuration for Spring Boot; never commit actual database passwords. The IDE configuration may store a locally readable password and must not be shared. Commit `.env.example` with placeholders only. | Implemented in initial setup. An actual password was previously committed to `.env.example`; the Git history was rewritten and force-pushed to replace it with a placeholder. The old password was not rotated and must still be considered potentially exposed. |
-| D-035 | Use GitHub repository `LeoBrcina/library-lending-system` and small, descriptive commits without conventional prefixes. | Seven logical commits preserved after the history rewrite; `main` synchronized with `origin/main` as last verified on 2026-10-29. |
-| D-036 | Use three ADRs for major decisions and maintain `docs/ai-usage.md`, `docs/ai-evaluation.md` and Figma documentation as the project progresses. | ADR-001, the decision register and AI usage log committed; remaining documentation planned. |
-| D-037 | Use the professor's assignment and uploaded lectures/demos as primary references. For external GitHub source-code reference, use only the two professor-authorized repositories. | Ongoing policy. |
-| D-038 | Do not implement major phases simultaneously; verify before moving forward, keep code paste-ready and review current files before modifying them. | Ongoing workflow policy. |
-| D-047 | Deploy the Spring Boot application on **Render Free** from a Dockerfile, with GitHub integration and public HTTPS access. | Accepted M1 hosting choice; no deployment performed. Free instances may sleep when idle. |
-| D-048 | Use **Neon Free** for managed PostgreSQL in production, keeping PostgreSQL 17 through Docker Compose for local development. Require TLS and environment-supplied production credentials. | Accepted M1 database-hosting choice; no Neon database created or connection tested. |
-| D-049 | Keep deployment spending at **€0**, without entering a payment card or enabling paid services. Verify free-tier conditions and resource limits before creating accounts. | Accepted project constraint; availability and quotas must be rechecked during deployment. |
-| D-050 | Use configurable scheduling: normal calendar-based execution and a short demonstration interval (for example, five seconds). Scheduling frequency must never change the per-calendar-day fine calculation. | Planned; job configuration and tests not implemented. |
-| D-051 | Treat Render Free sleep as an availability limitation: overdue fine processing must reconcile missed dates when execution resumes, with database-backed idempotency and coordination for multiple instances. A five-second demonstration does not prove unattended nightly execution. | Accepted design constraint; final scheduler mechanism and reliability tests pending ADR-003. |
+| D-032 | Use Java 25, Spring Boot 4.1, Maven Wrapper and IntelliJ IDEA. | Java 25.0.5, Spring Boot 4.1.2, Maven Wrapper 3.10.0 and IntelliJ IDEA 2026.2.3 verified. |
+| D-033 | Run PostgreSQL 17 through Docker Compose locally, bound to `127.0.0.1:5433`, with a persistent named volume. | PostgreSQL 17.11 and V1–V3 migrations verified. |
+| D-034 | Use ignored `.env` files and local IntelliJ environment settings for credentials. Commit only placeholders in `.env.example`. | Implemented. A real password was previously committed; history was rewritten, but the password was not rotated and remains potentially exposed. |
+| D-035 | Use `LeoBrcina/library-lending-system` and small descriptive commits without conventional prefixes. | Repository active; V1–V3 migration files committed to `main`. |
+| D-036 | Maintain three ADRs, `docs/ai-usage.md`, `docs/ai-evaluation.md` and Figma documentation. | ADR-001 and initial documentation present; ADR-002, ADR-003 and evaluation document pending. |
+| D-037 | Use the professor's assignment and uploaded lectures/demos as primary references. Only the two authorized professor GitHub repositories may be used as external code references. | Ongoing policy. |
+| D-038 | Implement one major phase at a time, inspect current files before changing them and verify work before committing. | Ongoing workflow policy. |
+| D-047 | Deploy Spring Boot to **Render Free** through Docker with GitHub integration and HTTPS. | Selected; deployment pending. |
+| D-048 | Use **Neon Free** for production PostgreSQL with TLS and environment-supplied credentials. | Selected; setup pending. |
+| D-049 | Keep deployment spending at **€0** with no payment card or paid service. | Accepted; actual free-tier limits to be checked before deployment. |
+| D-050 | Support normal calendar-based scheduling and a short demonstration interval. Scheduling frequency must not change daily fine calculations. | Planned. |
+| D-051 | Account for Render Free sleep by reconciling missed fine dates and coordinating execution across instances. A short demonstration interval does not prove overnight reliability. | Planned; ADR-003 pending. |
 
-### Hosting decision rationale
+### Hosting rationale
 
-Render Free and Neon Free were selected because the professor explicitly recommends this pair as a no-payment-card route to the course's free public deployment requirement. Render can host the Dockerized Spring Boot application behind HTTPS, while Neon supplies a separate managed PostgreSQL database. The target cost is €0, and no paid upgrade is authorized.
+Render Free and Neon Free were chosen as the intended no-cost deployment combination for the course project.
 
-The production setup will use a dedicated Spring profile, environment variables for database and Gemini credentials, Flyway migrations, an Actuator health check and a documented public HTTPS URL. Docker build and runtime behavior must be verified locally before deployment. These are planned implementation steps, not completed work.
+The application will be packaged in Docker, deployed through GitHub and connected to Neon PostgreSQL using environment-based credentials and TLS. Production setup will also require health checks and a public HTTPS endpoint.
 
-Render Free may sleep when idle, so JVM-based scheduled tasks cannot be assumed to run at their intended times. We will preserve calendar-based fine calculations, make the job idempotent and reconcile missed dates after resumption. A configurable five-second schedule can demonstrate repeated execution and the absence of duplicate charges during the defense, but does not establish guaranteed overnight execution. The persistence/locking strategy remains to be finalized in ADR-003.
+Render Free instances may sleep when inactive, so scheduled fine processing cannot depend solely on the application remaining awake. The job must reconcile missed dates after resuming, avoid duplicate charges and coordinate execution safely.
 
-## 7. Additional course obligations
+A short interval can demonstrate repeated scheduling during the defense, but it does not establish reliable unattended overnight execution.
 
-The following requirements are tracked to prevent omission. Some architectural decisions have been accepted, but the corresponding implementation has not yet been completed.
+## 7. Remaining course requirements
 
 | Requirement | Current position |
 |---|---|
-| Spring Security 7, BCrypt, CSRF, three roles and service-level authorization | Required for LO2; permissions matrix pending. |
-| REST API with DTOs, pagination, sorting, status codes and ProblemDetail | Required for LO5; endpoint design pending. |
-| AI feature accessible from both a screen and an endpoint | Required for LO5; Google Gemini selected, implementation pending. |
-| Provider-independent AI integration and deterministic stub tests | Approach accepted; implementation pending. |
-| JUnit 6, Mockito, MVC/repository/Testcontainers tests and JaCoCo service coverage | Required for LO6; no passing test result or coverage evidence yet. |
-| Croatian/English internationalization, including validation, date and number formatting | Required for LO7; not started. |
-| Two scheduled jobs and persistent execution/locking strategy | Required for LO7; not started. |
-| Figma low-/high-fidelity prototype, components, interactive flow and responsive views | Required prototype deliverables; not started. |
-| AI evaluation document with at least 10 actual cases | Required final documentation; evaluation not started. |
-| Managed database, HTTPS deployment, CI, performance evidence and recording | Render Free + Neon Free selected; actual deployment and evidence not yet verified. |
+| Spring Security 7, BCrypt, CSRF, three roles and service-level authorization | Role reference data implemented; authentication and authorization pending. |
+| REST API with DTOs, pagination, sorting, status codes and ProblemDetail | Planned for LO5. |
+| AI feature through screen and endpoint | Google Gemini selected; implementation pending. |
+| AI provider abstraction and deterministic stub tests | Planned. |
+| JUnit 6, Mockito, MVC/repository/Testcontainers tests and JaCoCo coverage | Planned; no automated Java test results verified. |
+| Croatian/English internationalization, validation, date and number formatting | Planned for LO7. |
+| Two scheduled jobs and persistent coordination | Planned for LO7. |
+| Figma prototypes and reusable components | M1 low-fidelity wireframes completed; M2 high-fidelity work pending. |
+| AI evaluation with at least ten real cases | Pending. |
+| Managed database, HTTPS deployment, CI, performance measurements and recording | Pending. |
 
-## 8. Implementation checkpoints and unresolved decisions
+## 8. Implementation checkpoints
 
-### Verified M1 technical baseline (2026-10-29)
+### M1 technical baseline — 2026-10-29
 
-- Git repository created with seven logical commits on `main`, synchronized with `origin/main` after the history rewrite.
+- Git repository initialized and synchronized with GitHub.
 - Java 25.0.5 and Maven Wrapper 3.10.0 verified.
-- Spring Boot 4.1.2 built successfully with tests deliberately skipped.
-- PostgreSQL 17.11 reported healthy through Docker Compose.
-- `psql` returned database `library_lending` and user `library_app`.
-- Spring Boot connected successfully through HikariCP and initialized Flyway and Hibernate.
-- Application started through Git Bash and IntelliJ IDEA.
-- HTTP request to `/` returned an expected 404 because no controller exists.
-- The Git history containing the Docker Compose commit was rewritten to replace the exposed `.env.example` password with a placeholder, and the new remote branch was verified.
+- Spring Boot 4.1.2 package build succeeded with tests skipped.
+- PostgreSQL 17.11 started in Docker Compose.
+- Spring Boot connected through HikariCP and initialized Flyway and Hibernate.
+- Tomcat started on port 8080.
+- HTTP request to `/` returned the expected 404 before controllers were added.
+- Git history was rewritten after a password was found in `.env.example`. The password was not rotated.
 
-### Accepted decisions not yet implemented
+### M2 database foundation — 2026-11-05
 
-- Google Gemini is the selected AI provider.
-- Gemini 2.5 Flash-Lite is the provisional initial model; Gemini 2.5 Flash is an alternative.
-- Structured AI classification, catalog duplicate suggestions, provider-independent integration and librarian confirmation are planned.
-- No real AI API calls, model evaluation results or AI integration tests have been verified.
-- Render Free is the selected web host and Neon Free the selected managed PostgreSQL service; no deployment has been performed.
-- A configurable five-second defense demonstration is planned for scheduled jobs without modifying calendar-day fine rules.
-- Free-instance sleep and reliable unattended scheduling remain unresolved deployment risks.
+- V1 created all 12 application tables.
+- PostgreSQL inspection confirmed the expected table count and selected uniqueness indexes.
+- V2 added reservation status and lifecycle checks, active-reservation indexes, copy/title consistency and loan-return constraints.
+- PostgreSQL inspection confirmed the V2 constraints.
+- The developer reported six negative SQL tests passing. Individual test-output logs were not supplied.
+- V3 added three user roles and ten library categories, verified through SQL queries.
+- All three Flyway migration files were committed to GitHub.
+- The original manually prepared M1 ER diagram was retained unchanged.
+- JPA entities, repositories, services, CRUD screens and development fixtures remain to be implemented.
 
-### Still to settle or complete
+### Accepted but not implemented
 
-- Professor's explicit topic acceptance has not been confirmed in the conversation.
-- Record the accepted hosting selection and verify account-level free-tier conditions when deployment begins.
-- Design and retain Figma low-fidelity wireframes.
-- Finalize the security permission matrix, entity enum values and transaction locking strategy before implementation.
-- Create migrations, seed data and application functionality in subsequent milestones.
-- Create ADR-002 for detailed AI integration design and ADR-003 for persistent scheduling.
-- Implement and evaluate the actual AI integration, recording at least 10 genuine cases.
-- Keep `docs/ai-usage.md` current and complete the remaining required documentation.
+- Google Gemini integration and model evaluation.
+- Render and Neon deployment.
+- Security and permission matrix.
+- Transactional circulation and reservation workflows.
+- Persistent scheduled jobs and catch-up processing.
+- Automated Java tests and coverage.
+- High-fidelity Figma prototype and interactive flow.
+
+### Next development work
+
+- Finalize the Java entity mappings and relevant enums.
+- Implement and test the catalog persistence layer.
+- Prepare development-only catalog fixtures.
+- Implement parent-child CRUD through services and Thymeleaf screens.
+- Prepare ADR-002 and ADR-003 during their respective implementation phases.
+- Continue updating documentation after verified changes.
 
 ## 9. Change management
 
-For each new or revised decision:
+Record new decisions when they affect the architecture, business rules or implementation approach. Keep the corresponding documentation synchronized with the code.
 
-1. Add or update the relevant decision ID and describe the reason.
-2. Note whether the change affects the ER diagram, ADRs, implementation, tests or Figma.
-3. Verify the resulting behavior where implementation exists.
-4. Make a focused Git commit after review.
-
-Do not present planned items as completed or infer test success from successful compilation.
+Verify implemented behavior before marking a requirement complete. Use focused commits for reviewed changes.
