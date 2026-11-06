@@ -1,10 +1,9 @@
-
 # AI Usage Log
 
 **Project:** P03 Library Lending System  
 **Course:** Rapid Development of Java Applications Using Programming Frameworks (2026/27)  
 **Started:** 2026-10-29  
-**Last updated:** 2026-11-05
+**Last updated:** 2026-11-06
 
 ## M1 — Planning and project setup
 
@@ -167,6 +166,41 @@
 - **Verification:** Flyway history showed versions 1, 2 and 3 applied successfully. PostgreSQL queries confirmed all three roles, ten categories and matching record counts. V3 was committed to GitHub.
 - **Files:** `src/main/resources/db/migration/V3__seed_reference_data.sql`.
 
+## M2 — Catalog persistence and continuous integration
+
+### AI-016 — Implement catalog JPA entities
+
+- **Date:** 2026-11-05 to 2026-11-06.
+- **Task:** Map the initial catalog portion of the PostgreSQL schema to Java entities.
+- **AI assistance:** Proposed and reviewed JPA mappings for book titles, physical copies, categories and the attributed book-category association. Explained lazy relationships, composite keys, `@MapsId`, entity lifecycle callbacks and parent-child association management.
+- **Developer work:** Created the Java classes in IntelliJ, checked compilation and application startup, reviewed the persistence design and committed the implemented entities.
+- **Changes and decisions:** Implemented `BookTitle`, `BookCopy`, `Category`, `BookCategory` and `BookCategoryId`. Used an explicit association entity for the attributed many-to-many relationship. Kept entity mappings aligned with the existing Flyway schema rather than changing applied migrations.
+- **Verification:** Maven compilation and Spring Boot startup were reported successful. Subsequent repository integration tests verified persistence and relationships against PostgreSQL.
+- **Files:** `src/main/java/hr/algebra/librarylendingsystem/domain/`.
+- **Remaining work:** Map the other eight application tables and implement service-level business operations.
+
+### AI-017 — Add catalog repositories and integration tests
+
+- **Date:** 2026-11-06.
+- **Task:** Implement catalog repositories and verify persistence against PostgreSQL.
+- **AI assistance:** Proposed four Spring Data JPA repository interfaces and three integration tests. Helped diagnose a missing `DB_PASSWORD` environment variable in IntelliJ JUnit configurations and explained how to supply it securely in Git Bash.
+- **Developer work:** Created the repository interfaces and integration test class, configured database credentials locally, ran the individual tests, ran the full Maven test suite and corrected the IntelliJ Run All Tests configuration.
+- **Changes and decisions:** Kept tests transactional and used unique inventory codes for test data. Tested book title/copy persistence, attributed category associations and rejection of two primary categories for one title.
+- **Verification:** All three catalog integration tests passed. The full four-test suite also passed through Maven and IntelliJ. The third test confirmed that PostgreSQL rejects a second primary category for the same title.
+- **Files:** `src/main/java/hr/algebra/librarylendingsystem/repository/`, `src/test/java/hr/algebra/librarylendingsystem/CatalogRepositoryIntegrationTests.java`.
+- **Remaining work:** Add service unit tests, MVC tests, `@DataJpaTest` coverage, Testcontainers integration tests and JaCoCo service coverage as development progresses.
+
+### AI-018 — Configure GitHub Actions continuous integration
+
+- **Date:** 2026-11-06.
+- **Task:** Implement automated build and test verification for the Spring Boot application.
+- **AI assistance:** Reviewed the professor's engineering and milestone requirements, inspected the committed Maven and datasource configuration and prepared a GitHub Actions workflow. Explained PostgreSQL service containers, Java setup, environment variables, Maven verification and CI status badges.
+- **Developer work:** Created `.github/workflows/ci.yml` locally in IntelliJ, committed and pushed the workflow, inspected the GitHub Actions execution and reported the result.
+- **Changes and decisions:** Configured the workflow to run on pushes and pull requests using Ubuntu, Eclipse Temurin Java 25 and PostgreSQL 17. The workflow supplies isolated test database credentials and overrides the local datasource URL to use port 5432. GitHub Actions permissions are limited to repository read access.
+- **Verification:** The developer reported that the GitHub Actions job completed with `BUILD SUCCESS` and all four tests passing. The workflow configuration was subsequently inspected in the committed GitHub repository.
+- **Files:** `.github/workflows/ci.yml`.
+- **Remaining work:** Add the CI badge, update the README and extend automated verification as more test categories are implemented.
+
 ## Verification summary
 
 ### M1 — 2026-10-29 to 2026-10-30
@@ -174,14 +208,14 @@
 | Area | Verified result |
 |---|---|
 | Development environment | Java 25.0.5, IntelliJ IDEA 2026.2.3 and Maven Wrapper 3.10.0. |
-| Build | Maven package completed successfully with tests skipped. |
+| Build | Initial Maven package completed successfully with tests skipped. |
 | PostgreSQL | Docker container healthy; version 17.11 and expected database/user confirmed. |
 | Spring Boot | Database connection and startup verified on port 8080. |
 | HTTP | Root endpoint returned 404 before implementing controllers. |
 | Git | Repository history and remote synchronization checked during M1. |
 | Design | 11 wireframe layouts and three state variations reviewed; four PDF exports saved in GitHub. |
 
-### M2 — 2026-11-05
+### M2 — 2026-11-05 to 2026-11-06
 
 | Area | Verified result |
 |---|---|
@@ -189,12 +223,21 @@
 | V2 | Reservation and loan-return constraints inspected in PostgreSQL. |
 | V2 tests | Six manual negative SQL tests reported passing; full output not independently reviewed. |
 | V3 | Three roles and ten categories verified through SQL queries. |
-| Git | All three migration files present on GitHub `main`. |
+| JPA mappings | Five catalog domain classes created and committed. |
+| Repositories | Four Spring Data JPA repositories created and committed. |
+| Integration tests | Three catalog integration tests passed against PostgreSQL. |
+| Local test suite | Four tests passed through Maven and IntelliJ. |
+| Continuous integration | GitHub Actions build succeeded with four passing tests, as reported by the developer. |
+| Git | Migration, domain, repository, test and CI workflow files are present on GitHub `main`. |
 
 ## Remaining work
 
-The database migrations and permanent reference data are in place. JPA entities, repositories, services, CRUD screens and development-only fixtures have not yet been implemented.
+The database migrations, permanent reference data, initial catalog JPA mappings, repositories, integration tests and GitHub Actions CI workflow are in place.
 
-Automated Java tests, security, REST API, Gemini integration, scheduling, internationalization, deployment, performance measurements and service coverage are still pending. No test coverage, AI evaluation scores or deployment results have been claimed.
+The remaining application tables still require Java mappings and repositories. Catalog services, DTOs, validation, CRUD screens and development-only fixtures have not yet been implemented.
 
-The M2 high-fidelity Figma prototype, components, responsive layouts and interactive flow also remain to be completed.
+Security, REST API, Gemini integration, scheduling, internationalization, deployment, performance measurements, additional test categories and service coverage remain pending. No coverage percentages, AI evaluation scores or production deployment results have been claimed.
+
+The M2 high-fidelity Figma prototype, reusable components, responsive layouts and interactive flow also remain to be completed.
+
+The README documentation and CI badge are being updated following the first successful GitHub Actions workflow.
