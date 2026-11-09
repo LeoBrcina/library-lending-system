@@ -1,9 +1,10 @@
+
 # AI Usage Log
 
 **Project:** P03 Library Lending System  
 **Course:** Rapid Development of Java Applications Using Programming Frameworks (2026/27)  
 **Started:** 2026-10-29  
-**Last updated:** 2026-11-06
+**Last updated:** 2026-11-09
 
 ## M1 — Planning and project setup
 
@@ -199,7 +200,75 @@
 - **Changes and decisions:** Configured the workflow to run on pushes and pull requests using Ubuntu, Eclipse Temurin Java 25 and PostgreSQL 17. The workflow supplies isolated test database credentials and overrides the local datasource URL to use port 5432. GitHub Actions permissions are limited to repository read access.
 - **Verification:** The developer reported that the GitHub Actions job completed with `BUILD SUCCESS` and all four tests passing. The workflow configuration was subsequently inspected in the committed GitHub repository.
 - **Files:** `.github/workflows/ci.yml`.
-- **Remaining work:** Add the CI badge, update the README and extend automated verification as more test categories are implemented.
+- **Remaining work:** Extend automated verification as more test categories are implemented. The CI badge is now present in the README.
+
+## M2 — High-fidelity Figma design and prototype
+
+### AI-019 — Build reusable Figma components
+
+- **Date:** M2 design phase, reviewed by 2026-11-09.
+- **Task:** Create a reusable component library for the Spring MVC application designs.
+- **AI assistance:** Prepared Figma Design AI prompts for reusable buttons, inputs, selects, status badges, alerts, navigation items, catalog rows and category badges. Explained the difference between reusable Figma components and decorative groups.
+- **Developer work:** Ran the prompts in Figma, reviewed the generated component library and retained the approved design system.
+- **Changes and decisions:** Established forest green, warm ivory and muted gold as the principal colors. Reused Inter typography, spacing conventions and native component variants. Preserved the M1 wireframes on a separate page.
+- **Verification:** The Figma component structure was inspected through the connected Figma API. Eight native component sets and 36 component variants were identified. All 36 variants had Auto Layout configured at the time of inspection.
+- **Files:** Figma page `02 - Components`.
+- **Limitations:** Component design verification does not establish that the corresponding HTML and CSS components have been implemented.
+
+### AI-020 — Generate and review high-fidelity desktop screens
+
+- **Date:** M2 design phase, reviewed by 2026-11-09.
+- **Task:** Prepare the required high-fidelity librarian screens and application state variations.
+- **AI assistance:** Developed sequential Figma Design AI prompts for catalog management, title editing, physical-copy details, empty results, validation errors and AI-assisted purchase suggestion review. Reviewed the generated results and recommended refinements.
+- **Developer work:** Executed the prompts in Figma, checked their visual consistency and accepted the completed screens.
+- **Changes and decisions:** Kept title metadata separate from physical-copy inventory. Preserved entered form values in the validation-error design. Designed the AI purchase-suggestion screen so Gemini recommendations are advisory and the librarian controls category overrides and acquisition decisions.
+- **Verification:** Six desktop frames, each 1440px wide, were confirmed through Figma metadata and screenshots. The AI-assisted review frame included 17 component instances. The other approved screens were retained.
+- **Files:** Figma page `03 - High-Fidelity Screens`.
+- **Limitations:** The designs contain illustrative catalog and Gemini data. They do not demonstrate working persistence, validation or AI integration.
+
+### AI-021 — Create and verify responsive mobile screens
+
+- **Date:** 2026-11-09.
+- **Task:** Adapt the approved book catalog and edit form to 390px mobile layouts.
+- **AI assistance:** Prepared a Figma Design AI prompt specifying mobile navigation, stacked catalog cards, single-column form controls, category selection, responsive spacing and accessibility considerations.
+- **Developer work:** Ran the prompt in the existing Figma design conversation and reviewed the generated mobile screens.
+- **Changes and decisions:** Replaced the desktop sidebar with a compact mobile header. Represented catalog rows as vertically stacked cards while preserving physical-copy availability information. Kept all required form fields and primary-category selection controls.
+- **Verification:** Both mobile frames were found within the `Mobile responsive variants · 390px` section. Their widths were confirmed as 390px. The catalog frame contained 23 component instances and 61 Auto Layout containers. The edit form contained 12 component instances and 60 Auto Layout containers. No text layers below 12px were found during the inspection.
+- **Files:** Figma frames `Book Catalog — Mobile 390` and `Edit Book Title — Mobile 390`.
+- **Limitations:** Browser reflow and mobile interaction behavior remain to be tested in the implemented application.
+
+### AI-022 — Connect and test the clickable Figma prototype
+
+- **Date:** 2026-11-09.
+- **Task:** Create an interactive librarian catalog-management flow using the approved desktop designs.
+- **AI assistance:** Prepared an interaction plan and attempted a Figma Design AI prompt. When the Figma agent reported that it could not create native prototype connections, provided step-by-step instructions for using Figma's Prototype tab manually.
+- **Developer work:** Created the prototype connections in Figma and tested the navigation in presentation mode.
+- **Changes and decisions:** Used existing frames instead of generating replacement screens. The main flow connects Book Catalog, Book Title Details and Edit Book Title. Save returns to the title details screen with a displayed success notification. Cancel and breadcrumb navigation were also planned and connected as part of the tested workflow.
+- **Verification:** The developer reported that the prototype interactions worked correctly. Native Figma navigation demonstrates the intended workflow without saving records to a database.
+- **Files:** Figma page `03 - High-Fidelity Screens`.
+- **Limitations:** The static prototype does not execute server-side validation or persist data. No automated Figma interaction test was performed.
+
+### AI-023 — Audit design contrast and prepare the rationale
+
+- **Date:** 2026-11-09.
+- **Task:** Review Figma color contrast and document the UI/UX design decisions.
+- **AI assistance:** Used read-only Figma inspection to extract text and background colors, inspected relevant component styles and calculated WCAG contrast ratios using relative luminance. Drafted the design rationale.
+- **Developer work:** Requested numerical evidence rather than a visual estimate, reviewed the findings and created `docs/design-rationale.md` locally.
+- **Changes and decisions:** Kept the established design palette while documenting restrictions on low-contrast decorative colors. Distinguished Figma contrast measurements from complete accessibility conformance.
+- **Verification:** All 20 distinct text/background combinations extracted from eight high-fidelity frames met the 4.5:1 normal-text contrast threshold. The standard input border measured approximately 3.64:1 against white, and the primary focus outline measured approximately 4.77:1 against white.
+- **Files:** `docs/design-rationale.md` and the Figma component library.
+- **Limitations:** Some subtle borders, pale focus halos and gold accents fall below 3:1 against light backgrounds and must not be the sole meaningful interface indicators. Keyboard navigation, screen-reader behavior and browser-rendered accessibility remain untested.
+
+### AI-024 — Export prototype PDF and update documentation
+
+- **Date:** 2026-11-09.
+- **Task:** Prepare the M2 high-fidelity prototype export and update repository documentation.
+- **AI assistance:** Explained Figma's multipage PDF export process, identified the risk of omitting mobile frames nested in a section, reviewed screenshots of the exported mobile pages and prepared updated README and AI usage documentation.
+- **Developer work:** Exported the Figma designs, confirmed that the resulting PDF contained eight pages and provided screenshots showing the two mobile frames as the final pages. Prepared the prototype PDF and design rationale for inclusion in the project documentation.
+- **Changes and decisions:** Kept the four M1 wireframe PDFs separate from the M2 prototype PDF. Planned `docs/prototype.pdf` as the combined high-fidelity export, with the README linking to both the prototype and design rationale.
+- **Verification:** The developer confirmed an eight-page PDF. Screenshots of the final two pages were inspected and showed the complete mobile catalog and edit form. The PDF file itself was not independently opened and inspected during this review.
+- **Files:** `docs/prototype.pdf`, `README.md`, `docs/ai-usage.md`.
+- **Remaining work:** Save and review the updated documentation, verify Figma sharing permissions, commit and push the files, then confirm their presence on GitHub.
 
 ## Verification summary
 
@@ -215,7 +284,7 @@
 | Git | Repository history and remote synchronization checked during M1. |
 | Design | 11 wireframe layouts and three state variations reviewed; four PDF exports saved in GitHub. |
 
-### M2 — 2026-11-05 to 2026-11-06
+### M2 — 2026-11-05 to 2026-11-09
 
 | Area | Verified result |
 |---|---|
@@ -229,6 +298,14 @@
 | Local test suite | Four tests passed through Maven and IntelliJ. |
 | Continuous integration | GitHub Actions build succeeded with four passing tests, as reported by the developer. |
 | Git | Migration, domain, repository, test and CI workflow files are present on GitHub `main`. |
+| Figma components | Eight native component sets and 36 variants inspected. |
+| Desktop designs | Six high-fidelity desktop frames verified at 1440px width. |
+| Mobile designs | Two high-fidelity mobile frames verified at 390px width. |
+| Prototype | Main librarian navigation flow reported working in Figma presentation mode. |
+| Contrast | Twenty extracted text/background combinations met the 4.5:1 threshold. |
+| Design rationale | Drafted and added locally by the developer. |
+| Prototype PDF | Eight pages confirmed by the developer; final two mobile pages visually inspected. |
+| Documentation | README and AI usage log prepared for local review and commit. |
 
 ## Remaining work
 
@@ -238,6 +315,6 @@ The remaining application tables still require Java mappings and repositories. C
 
 Security, REST API, Gemini integration, scheduling, internationalization, deployment, performance measurements, additional test categories and service coverage remain pending. No coverage percentages, AI evaluation scores or production deployment results have been claimed.
 
-The M2 high-fidelity Figma prototype, reusable components, responsive layouts and interactive flow also remain to be completed.
+The M2 Figma design work has been prepared, including reusable components, desktop and mobile screens, a clickable prototype, contrast measurements, design rationale and PDF export.
 
-The README documentation and CI badge are being updated following the first successful GitHub Actions workflow.
+Final Figma documentation checks, repository synchronization and public sharing verification remain pending. The implemented application's accessibility and functional behavior must be tested separately from the Figma prototype.

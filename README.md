@@ -1,3 +1,4 @@
+
 # P03 Library Lending System
 
 [![Java CI](https://github.com/LeoBrcina/library-lending-system/actions/workflows/ci.yml/badge.svg)](https://github.com/LeoBrcina/library-lending-system/actions/workflows/ci.yml)
@@ -15,7 +16,9 @@ The application follows a hybrid lending workflow: members will be able to brows
 
 Development follows the course milestones M1-M4 and the final submission requirements.
 
-**Current status:** M1 foundation and design completed. M2 implementation is in progress. The PostgreSQL schema, Flyway migrations, reference data, initial catalog JPA mappings, repositories and persistence integration tests have been implemented. GitHub Actions CI builds and tests the project automatically. Business services and web interfaces have not yet been implemented.
+**Current status:** M1 foundation and design completed. M2 implementation is in progress. The PostgreSQL schema, Flyway migrations, reference data, initial catalog JPA mappings, repositories and persistence integration tests have been implemented. GitHub Actions CI builds and tests the project automatically.
+
+The M2 Figma design work is also prepared, including reusable components, high-fidelity desktop and mobile screens, a tested clickable prototype and an accessibility design review. The catalog business services and web interfaces have not yet been implemented.
 
 ## 2. Technology Stack
 
@@ -84,6 +87,8 @@ The planned AI workflow will:
 
 AI recommendations will be advisory. Purchase decisions will remain under human control.
 
+The Figma prototype illustrates the intended review interface using sample data. No live Gemini integration or AI evaluation has been completed.
+
 ## 4. Key Business Rules
 
 The current project design includes the following policies:
@@ -136,7 +141,7 @@ The diagram includes a parent-child relationship between book titles and physica
 
 The ER diagram is available in both editable draw.io and PDF formats.
 
-### Figma Prototype
+### M1 Low-Fidelity Figma Wireframes
 
 The low-fidelity wireframes contain 11 main screen layouts and three state variations.
 
@@ -153,7 +158,7 @@ The screens cover public and member workflows, librarian operations, administrat
 - [Administrator](docs/wireframes-m1/C%20-%20Administrator.pdf)
 - [State Variations](docs/wireframes-m1/D%20-%20State%20Variations.pdf)
 
-The grayscale wireframes are preserved separately from the planned M2 high-fidelity screens.
+The grayscale M1 wireframes are preserved separately from the M2 high-fidelity designs.
 
 ## 6. M2 Persistence Implementation
 
@@ -202,7 +207,120 @@ Repository integration tests verify persistence, retrieval, entity relationships
 
 Catalog business services, DTOs, validation rules, controllers and Thymeleaf CRUD screens are the next implementation steps.
 
-## 7. Local Development Setup
+## 7. M2 High-Fidelity Figma Prototype
+
+The M2 UI/UX work builds on the preserved M1 wireframes and provides a visual foundation for the planned Spring MVC and Thymeleaf application.
+
+The Figma file contains three main pages:
+
+1. `01 - Low-Fidelity Wireframes`
+2. `02 - Components`
+3. `03 - High-Fidelity Screens`
+
+The high-fidelity designs use forest green (`#163A39`), warm ivory (`#F6F5F1`), muted gold (`#C78E52`), Inter typography, Auto Layout and reusable Figma components.
+
+### Reusable Component Library
+
+Eight native reusable component families were created:
+
+- Button
+- Text Input
+- Select
+- Status Badge
+- Alert
+- Navigation Item
+- Catalog Table Row
+- Category Badge
+
+The component library contains 36 component variants. The components use consistent visual states, spacing and typography.
+
+### High-Fidelity Screens
+
+Six desktop frames at 1440px width were prepared and inspected:
+
+| Figma frame | Purpose |
+|---|---|
+| Book Catalog | Search, filtering and management of bibliographic titles |
+| Edit Book Title | Editing title information and categories |
+| Book Title Details & Physical Copies | Displaying title information and managing physical copies |
+| Book Catalog — Empty Results | Showing an unsuccessful catalog search |
+| Edit Book Title — Validation Errors | Demonstrating required-field validation and preserved form values |
+| AI-Assisted Purchase Suggestion Review | Reviewing AI category suggestions and possible duplicates before a human decision |
+
+Two responsive frames at 390px width were also prepared:
+
+- Book Catalog — Mobile 390
+- Edit Book Title — Mobile 390
+
+The mobile catalog replaces the desktop table with stacked book cards. The mobile edit form uses a single-column layout while retaining the original fields and classification controls.
+
+### Clickable Prototype
+
+A native Figma prototype demonstrates the librarian's catalog-management workflow:
+
+1. Open the Book Catalog.
+2. Select View for a book title.
+3. Open the title details and select Edit Title.
+4. Use Save to return to the title details with success feedback.
+5. Return to the catalog using the breadcrumb.
+
+Cancel navigation was also connected. The developer tested the main navigation flow successfully in Figma presentation mode.
+
+The prototype demonstrates intended navigation rather than working backend functionality. Form submissions do not persist records, and the application services have not yet been implemented.
+
+### Planned Thymeleaf Template Mapping
+
+The following mapping will guide the future Spring MVC implementation. These template files have not yet been created.
+
+| Figma frame | Planned Thymeleaf template |
+|---|---|
+| Book Catalog | `templates/librarian/books/list.html` |
+| Edit Book Title | `templates/librarian/books/form.html` |
+| Book Title Details & Physical Copies | `templates/librarian/books/details.html` |
+| Book Catalog — Empty Results | `templates/librarian/books/list.html` with an empty-result state |
+| Edit Book Title — Validation Errors | `templates/librarian/books/form.html` with validation errors |
+| AI-Assisted Purchase Suggestion Review | `templates/librarian/acquisitions/review.html` |
+| Book Catalog — Mobile 390 | Responsive CSS for `templates/librarian/books/list.html` |
+| Edit Book Title — Mobile 390 | Responsive CSS for `templates/librarian/books/form.html` |
+
+The empty-results and validation-error designs represent states of existing templates, not separate pages. Mobile variants will use the same server-rendered templates with responsive styling.
+
+The eventual implementation will separate controllers, services, repositories, DTOs and form objects. JPA entities will not be exposed directly to Thymeleaf forms.
+
+### Accessibility Review
+
+A read-only inspection of the desktop and mobile Figma screens extracted foreground and background colors for numerical WCAG contrast analysis.
+
+All 20 distinct text/background combinations identified by that inspection met the WCAG AA minimum contrast ratio of 4.5:1 for normal text.
+
+Representative results include:
+
+| Combination | Contrast ratio |
+|---|---:|
+| Primary text on white | 13.20:1 |
+| Secondary text on white | 5.79:1 |
+| Secondary text on ivory | 5.30:1 |
+| White text on forest green | 12.36:1 |
+| Error text on pale red | 6.55:1 |
+| Input border on white | 3.64:1 |
+| Focus outline on white | 4.77:1 |
+
+Some light decorative colors fall below the 3:1 non-text contrast target and must not be the sole meaningful control or status indicators.
+
+The review does not establish full WCAG compliance. Keyboard navigation, screen-reader behavior, browser-rendered contrast and other accessibility requirements must be verified after implementation.
+
+### Figma Deliverables
+
+- [Figma design and prototype file](https://www.figma.com/design/PiQSnO17vQGKHeqz3ktlb1/P03-Library-Lending-System---UI-UX-Prototype)
+- [High-fidelity prototype PDF](docs/prototype.pdf)
+- [UI/UX design rationale and accessibility review](docs/design-rationale.md)
+- [AI usage and verification log](docs/ai-usage.md)
+
+The developer exported an eight-page high-fidelity prototype PDF and visually checked the two mobile frames on its final pages. The complete PDF file has not been independently inspected in this review.
+
+The Figma link is recorded, but anonymous or public viewing permissions still require verification.
+
+## 8. Local Development Setup
 
 ### Prerequisites
 
@@ -284,7 +402,7 @@ The application uses port `8080`.
 
 **Current limitation:** No web controllers or Thymeleaf pages have been implemented yet. An HTTP 404 response at `http://localhost:8080/` is expected at the current stage.
 
-## 8. Continuous Integration
+## 9. Continuous Integration
 
 GitHub Actions automatically builds and tests the project on every push and pull request.
 
@@ -309,7 +427,7 @@ The current workflow performs continuous integration only. Automatic production 
 
 [View GitHub Actions runs](https://github.com/LeoBrcina/library-lending-system/actions)
 
-## 9. Project Structure
+## 10. Project Structure
 
 ```text
 library-lending-system/
@@ -328,7 +446,9 @@ library-lending-system/
 │   │   ├── C - Administrator.pdf
 │   │   └── D - State Variations.pdf
 │   ├── ai-usage.md
-│   └── decisions.md
+│   ├── decisions.md
+│   ├── design-rationale.md
+│   └── prototype.pdf
 ├── src/
 │   ├── main/
 │   │   ├── java/hr/algebra/librarylendingsystem/
@@ -347,9 +467,9 @@ library-lending-system/
 └── README.md
 ```
 
-Additional packages, mappings, templates, tests and deployment files will be added incrementally.
+The structure includes the locally prepared M2 design documentation. Additional packages, mappings, templates, tests and deployment files will be added incrementally.
 
-## 10. Development Roadmap
+## 11. Development Roadmap
 
 ### M1 — Foundation and Design
 
@@ -364,19 +484,24 @@ Additional packages, mappings, templates, tests and deployment files will be add
 
 ### M2 — Persistence and Catalog CRUD
 
-Completed:
+Completed or prepared:
 
 - Flyway V1-V3 database migrations and reference data.
 - Initial catalog JPA entities and repositories.
 - Catalog persistence integration tests.
 - GitHub Actions build-and-test workflow.
+- High-fidelity Figma screens and reusable components.
+- Responsive desktop and mobile design variants.
+- Clickable librarian catalog-management prototype.
+- Design contrast review and rationale.
+- Eight-page prototype PDF export.
 
 Next steps:
 
-- Complete the high-fidelity Figma prototype and reusable components.
-- Implement catalog business services and parent-child CRUD screens.
+- Verify final Figma documentation, sharing permissions and repository changes.
+- Complete catalog business services and parent-child CRUD screens.
 - Complete the remaining JPA mappings and persistence tests.
-- Prepare the M2 documentation and verification evidence.
+- Prepare and review M2 implementation evidence.
 
 ### M3 — Security, REST API and AI
 
@@ -407,18 +532,19 @@ Planned:
 
 - Complete documentation and three ADRs.
 - AI evaluation documentation.
-- Final Figma prototype PDF and design rationale.
+- Final review of the Figma prototype PDF and design rationale.
 - Coverage report.
 - Working deployment and demo accounts.
 - Application recording and defense preparation.
 
-## 11. Architecture and AI Documentation
+## 12. Architecture and AI Documentation
 
 Key development documents:
 
 - [Project Decision Register](docs/decisions.md)
 - [ADR-001: Persistence Model and Transactional Consistency](docs/adr/001-persistence-model.md)
 - [AI Usage Log](docs/ai-usage.md)
+- [UI/UX Design Rationale](docs/design-rationale.md)
 
 The project uses AI assistance for requirements analysis, architectural planning, documentation, persistence implementation guidance, testing and UI design.
 
@@ -426,7 +552,7 @@ AI-generated material is reviewed by the developer. Implementation details, test
 
 ADR-002, ADR-003 and the required AI evaluation document will be prepared during their corresponding development phases.
 
-## 12. Current Project Status
+## 13. Current Project Status
 
 **Milestone:** M2 implementation in progress.
 
@@ -448,6 +574,10 @@ ADR-002, ADR-003 and the required AI evaluation document will be prepared during
 - Persistence ADR.
 - Project decision register.
 - Low-fidelity Figma wireframes.
+- Eight high-fidelity Figma screens, including two mobile variants.
+- Reusable component library and clickable prototype.
+- Numerical contrast audit and design rationale.
+- Eight-page prototype PDF export, pending full-file inspection.
 - AI provider and deployment decisions.
 
 **Not yet implemented:**
@@ -462,6 +592,5 @@ ADR-002, ADR-003 and the required AI evaluation document will be prepared during
 - Internationalization.
 - Application containerization and production deployment.
 - Final testing, coverage and performance evidence.
-- M2 high-fidelity Figma prototype.
 
-The project is developed incrementally. Planned features are not presented as verified functionality.
+The project is developed incrementally. Prepared designs and planned features are not presented as verified application functionality.
