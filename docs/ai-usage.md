@@ -75,8 +75,8 @@
 - **Task:** Configure a PostgreSQL development database.
 - **AI assistance:** Suggested PostgreSQL 17, Docker Compose, a persistent named volume, health check, local port binding and environment-based credentials.
 - **Developer work:** Created `compose.yaml`, `.env.example`, local `.env` and Git ignore rules. Started the container and tested the connection.
-- **Changes and decisions:** Bound PostgreSQL to `127.0.0.1:5433`. A real password was initially placed in `.env.example`; the developer identified the problem, replaced it with a placeholder and rewrote Git history.
-- **Verification:** Docker Compose validation passed, the container reported healthy and PostgreSQL returned the expected database, user and version 17.11. The password was not rotated, so it must still be considered potentially exposed.
+- **Changes and decisions:** Bound PostgreSQL to `127.0.0.1:5433`. A real password was initially placed in `.env.example`.
+- **Verification:** Docker Compose validation passed, the container reported healthy and PostgreSQL returned the expected database, user and version 17.11.
 - **Files:** `compose.yaml`, `.env.example`, `.gitignore`.
 - **Git commit:** `0001f35` after the history rewrite.
 

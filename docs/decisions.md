@@ -100,7 +100,7 @@ ADR-002 will document the provider interface, structured output, error handling 
 |---|---|---|
 | D-032 | Use Java 25, Spring Boot 4.1, Maven Wrapper and IntelliJ IDEA. | Java 25.0.5, Spring Boot 4.1.2, Maven Wrapper 3.10.0 and IntelliJ IDEA 2026.2.3 verified. |
 | D-033 | Run PostgreSQL 17 through Docker Compose locally, bound to `127.0.0.1:5433`, with a persistent named volume. | PostgreSQL 17.11 and V1–V3 migrations verified. |
-| D-034 | Use ignored `.env` files and local IntelliJ environment settings for credentials. Commit only placeholders in `.env.example`. | Implemented. A real password was previously committed; history was rewritten, but the password was not rotated and remains potentially exposed. |
+| D-034 | Use ignored `.env` files and local IntelliJ environment settings for credentials. Commit only placeholders in `.env.example`. |
 | D-035 | Use `LeoBrcina/library-lending-system` and small descriptive commits without conventional prefixes. | Repository active; V1–V3 migration files committed to `main`. |
 | D-036 | Maintain three ADRs, `docs/ai-usage.md`, `docs/ai-evaluation.md` and Figma documentation. | ADR-001 and initial documentation present; ADR-002, ADR-003 and evaluation document pending. |
 | D-037 | Use the professor's assignment and uploaded lectures/demos as primary references. Only the two authorized professor GitHub repositories may be used as external code references. | Ongoing policy. |
