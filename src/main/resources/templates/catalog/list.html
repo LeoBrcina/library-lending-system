@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Book Catalog | Library Lending System</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f7f8fa;
+            color: #202938;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 24px;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            margin-bottom: 28px;
+            color: #667085;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: end;
+            gap: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .field label {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input, select, button {
+            padding: 10px 12px;
+            font: inherit;
+            border: 1px solid #d0d5dd;
+            border-radius: 6px;
+        }
+
+        button {
+            background: #253c68;
+            border-color: #253c68;
+            color: white;
+            cursor: pointer;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #f9fafb;
+            font-size: 14px;
+        }
+
+        .badge {
+            display: inline-block;
+            margin: 3px;
+            padding: 4px 8px;
+            background: #edf2f7;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        .primary {
+            background: #e0ecff;
+            font-weight: bold;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .pagination a {
+            color: #253c68;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .empty {
+            padding: 40px;
+            text-align: center;
+            color: #667085;
+        }
+    </style>
+</head>
+
+<body>
+<main>
+    <h1>Book Catalog</h1>
+    <p class="subtitle">
+        Browse and search the library's book titles.
+    </p>
+
+    <form class="filters"
+          th:action="@{/catalog}"
+          method="get">
+
+        <div class="field">
+            <label for="searchText">Search</label>
+            <input id="searchText"
+                   type="search"
+                   name="searchText"
+                   placeholder="Title, author or ISBN"
+                   th:value="${searchText}">
+        </div>
+
+        <div class="field">
+            <label for="active">Status</label>
+            <select id="active" name="active">
+                <option value=""
+                        th:selected="${active == null}">
+                    All
+                </option>
+                <option value="true"
+                        th:selected="${active != null and active}">
+                    Active
+                </option>
+                <option value="false"
+                        th:selected="${active != null and !active}">
+                    Inactive
+                </option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="sortBy">Sort by</label>
+            <select id="sortBy" name="sortBy">
+                <option value="title"
+                        th:selected="${sortBy == 'title'}">
+                    Title
+                </option>
+                <option value="authors"
+                        th:selected="${sortBy == 'authors'}">
+                    Author
+                </option>
+                <option value="isbn"
+                        th:selected="${sortBy == 'isbn'}">
+                    ISBN
+                </option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="ascending">Direction</label>
+            <select id="ascending" name="ascending">
+                <option value="true"
+                        th:selected="${ascending}">
+                    Ascending
+                </option>
+                <option value="false"
+                        th:selected="${!ascending}">
+                    Descending
+                </option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="categoryId">Category</label>
+
+            <select id="categoryId" name="categoryId">
+                <option value=""
+                        th:selected="${categoryId == null}">
+                    All Categories
+                </option>
+
+                <option th:each="category : ${categories}"
+                        th:value="${category.id}"
+                        th:text="${category.name}"
+                        th:selected="${categoryId == category.id}">
+                    Category Name
+                </option>
+            </select>
+        </div>
+
+        <button type="submit">Apply Filters</button>
+    </form>
+
+    <p th:text="|${books.totalElements} book title(s) found|">
+        0 book titles found
+    </p>
+
+    <div class="table-wrapper">
+
+        <table th:if="${!books.empty}">
+            <thead>
+            <tr>
+                <th>Title</th>
+                <th>Authors</th>
+                <th>ISBN</th>
+                <th>Categories</th>
+                <th>Copies</th>
+                <th>Available</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="book : ${books.content}">
+                <td th:text="${book.title}">Example Title</td>
+                <td th:text="${book.authors}">Example Author</td>
+
+                <td th:text="${book.isbn != null ? book.isbn : '-'}">
+                    -
+                </td>
+
+                <td>
+                    <span th:each="category : ${book.categories}"
+                          th:text="${category.name}"
+                          th:classappend="${category.primary} ? 'primary' : ''"
+                          class="badge">
+                        Category
+                    </span>
+                </td>
+
+                <td th:text="${book.totalCopies}">0</td>
+                <td th:text="${book.availableCopies}">0</td>
+
+                <td th:text="${book.active ? 'Active' : 'Inactive'}">
+                    Active
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="empty" th:if="${books.empty}">
+            No book titles match the selected filters.
+        </div>
+    </div>
+
+    <nav class="pagination"
+         aria-label="Catalog pagination"
+         th:if="${books.totalPages > 1}">
+
+        <a th:if="${books.hasPrevious()}"
+           th:href="@{/catalog(
+               searchText=${searchText},
+               categoryId=${categoryId},
+               active=${active},
+               sortBy=${sortBy},
+               ascending=${ascending},
+               page=${books.number - 1}
+           )}">
+            Previous
+        </a>
+
+        <span th:unless="${books.hasPrevious()}"></span>
+
+        <span th:text="|Page ${books.number + 1} of ${books.totalPages}|">
+            Page 1 of 1
+        </span>
+
+        <a th:if="${books.hasNext()}"
+           th:href="@{/catalog(
+               searchText=${searchText},
+               categoryId=${categoryId},
+               active=${active},
+               sortBy=${sortBy},
+               ascending=${ascending},
+               page=${books.number + 1}
+           )}">
+            Next
+        </a>
+
+        <span th:unless="${books.hasNext()}"></span>
+    </nav>
+</main>
+</body>
+</html>
