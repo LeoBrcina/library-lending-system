@@ -598,3 +598,200 @@ a.sidebar-navigation__item:hover {
         padding: 16px;
     }
 }
+
+/* Mobile catalog cards
+   Based on the approved 390px Figma responsive prototype. */
+
+.catalog-mobile-list {
+    display: none;
+}
+
+@media (max-width: 767px) {
+
+    /* Separate mobile sections instead of one large desktop panel. */
+
+    .catalog-panel {
+        overflow: visible;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .catalog-filters {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-panel);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .catalog-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 0;
+        margin-bottom: 16px;
+        border-top: 0;
+    }
+
+    .catalog-toolbar__heading {
+        font-size: 20px;
+    }
+
+    .catalog-toolbar__description {
+        font-size: 13px;
+    }
+
+    /* Replace the desktop table with mobile book cards. */
+
+    .catalog-table-wrapper {
+        display: none;
+    }
+
+    .catalog-mobile-list {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+    }
+
+    .catalog-mobile-card {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-width: 0;
+        padding: 16px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-panel);
+    }
+
+    .catalog-mobile-card__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .catalog-mobile-card__identifier {
+        color: var(--color-text-secondary);
+        font-size: 13px;
+    }
+
+    .catalog-mobile-card__details {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .catalog-mobile-card__title {
+        margin: 0;
+        color: var(--color-primary);
+        font-size: 20px;
+        font-weight: 600;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .catalog-mobile-card__author {
+        margin: 0;
+        color: var(--color-text);
+        font-size: 14px;
+    }
+
+    .catalog-mobile-card__isbn {
+        margin: 0;
+        color: var(--color-text-secondary);
+        font-size: 13px;
+        overflow-wrap: anywhere;
+    }
+
+    .catalog-mobile-card__categories {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .catalog-mobile-card__categories .catalog-category {
+        margin: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .catalog-mobile-card__inventory {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-top: 16px;
+        border-top: 1px solid var(--color-border);
+    }
+
+    .catalog-mobile-card__inventory-heading {
+        margin: 0;
+        color: var(--color-text);
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .catalog-mobile-card__inventory-count {
+        margin: 0;
+        color: var(--color-text-secondary);
+        font-size: 14px;
+    }
+
+    /* Empty state and pagination become separate white panels. */
+
+    .catalog-empty {
+        padding: 32px 16px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-panel);
+    }
+
+    .catalog-pagination {
+        min-height: 64px;
+        margin-top: 16px;
+        padding: 16px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-panel);
+    }
+
+    .catalog-pagination__link {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .catalog-pagination__spacer {
+        width: 44px;
+    }
+}
+
+
+/* Mobile catalog card spacing refinement */
+
+@media (max-width: 767px) {
+
+    .catalog-mobile-card {
+        padding: 20px;
+    }
+
+    .catalog-mobile-card__header,
+    .catalog-mobile-card__details,
+    .catalog-mobile-card__categories,
+    .catalog-mobile-card__inventory {
+        width: 100%;
+    }
+
+    .catalog-mobile-card__details {
+        gap: 10px;
+    }
+
+    .catalog-mobile-card__inventory {
+        margin-top: 4px;
+    }
+}
