@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<aside class="app-sidebar" th:fragment="sidebar">
+
+    <div class="sidebar-main">
+
+        <div class="sidebar-brand">
+            <div class="sidebar-brand__name">
+                P03 Library
+            </div>
+
+            <div class="sidebar-brand__subtitle">
+                Librarian workspace
+            </div>
+        </div>
+
+        <nav class="sidebar-navigation"
+             aria-label="Main navigation">
+
+            <p class="sidebar-navigation__label">
+                WORKSPACE
+            </p>
+
+            <a class="sidebar-navigation__item sidebar-navigation__item--active"
+               th:href="@{/catalog}"
+               aria-current="page">
+                Book Management
+            </a>
+
+            <span class="sidebar-navigation__item sidebar-navigation__item--disabled">
+                Circulation
+            </span>
+
+            <span class="sidebar-navigation__item sidebar-navigation__item--disabled">
+                Acquisitions
+            </span>
+
+        </nav>
+
+    </div>
+
+    <div class="sidebar-footer">
+        <p class="sidebar-footer__title">
+            P03 Library Lending System
+        </p>
+        <p class="sidebar-footer__subtitle">
+            Library administration
+        </p>
+    </div>
+
+</aside>
+
+</body>
+</html>

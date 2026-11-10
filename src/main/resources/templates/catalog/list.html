@@ -4,306 +4,287 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Book Catalog | Library Lending System</title>
+    <title>Book Catalog | P03 Library</title>
 
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f7f8fa;
-            color: #202938;
-        }
-
-        main {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 24px;
-        }
-
-        h1 {
-            margin-bottom: 8px;
-        }
-
-        .subtitle {
-            margin-bottom: 28px;
-            color: #667085;
-        }
-
-        .filters {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: end;
-            gap: 16px;
-            padding: 20px;
-            margin-bottom: 24px;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-        }
-
-        .field {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .field label {
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        input, select, button {
-            padding: 10px 12px;
-            font: inherit;
-            border: 1px solid #d0d5dd;
-            border-radius: 6px;
-        }
-
-        button {
-            background: #253c68;
-            border-color: #253c68;
-            color: white;
-            cursor: pointer;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 14px 16px;
-            text-align: left;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        th {
-            background: #f9fafb;
-            font-size: 14px;
-        }
-
-        .badge {
-            display: inline-block;
-            margin: 3px;
-            padding: 4px 8px;
-            background: #edf2f7;
-            border-radius: 5px;
-            font-size: 12px;
-        }
-
-        .primary {
-            background: #e0ecff;
-            font-weight: bold;
-        }
-
-        .pagination {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            margin-top: 24px;
-        }
-
-        .pagination a {
-            color: #253c68;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .empty {
-            padding: 40px;
-            text-align: center;
-            color: #667085;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/library.css}">
 </head>
 
 <body>
-<main>
-    <h1>Book Catalog</h1>
-    <p class="subtitle">
-        Browse and search the library's book titles.
-    </p>
 
-    <form class="filters"
-          th:action="@{/catalog}"
-          method="get">
+<div class="app-shell">
 
-        <div class="field">
-            <label for="searchText">Search</label>
-            <input id="searchText"
-                   type="search"
-                   name="searchText"
-                   placeholder="Title, author or ISBN"
-                   th:value="${searchText}">
-        </div>
+    <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
 
-        <div class="field">
-            <label for="active">Status</label>
-            <select id="active" name="active">
-                <option value=""
-                        th:selected="${active == null}">
-                    All
-                </option>
-                <option value="true"
-                        th:selected="${active != null and active}">
-                    Active
-                </option>
-                <option value="false"
-                        th:selected="${active != null and !active}">
-                    Inactive
-                </option>
-            </select>
-        </div>
+    <div class="app-workspace">
 
-        <div class="field">
-            <label for="sortBy">Sort by</label>
-            <select id="sortBy" name="sortBy">
-                <option value="title"
-                        th:selected="${sortBy == 'title'}">
-                    Title
-                </option>
-                <option value="authors"
-                        th:selected="${sortBy == 'authors'}">
-                    Author
-                </option>
-                <option value="isbn"
-                        th:selected="${sortBy == 'isbn'}">
-                    ISBN
-                </option>
-            </select>
-        </div>
+        <header th:replace="~{fragments/workspace-header :: workspaceHeader}">
+        </header>
 
-        <div class="field">
-            <label for="ascending">Direction</label>
-            <select id="ascending" name="ascending">
-                <option value="true"
-                        th:selected="${ascending}">
-                    Ascending
-                </option>
-                <option value="false"
-                        th:selected="${!ascending}">
-                    Descending
-                </option>
-            </select>
-        </div>
+        <main class="page-content">
 
-        <div class="field">
-            <label for="categoryId">Category</label>
+            <div class="page-heading">
+                <h1>Book Catalog</h1>
 
-            <select id="categoryId" name="categoryId">
-                <option value=""
-                        th:selected="${categoryId == null}">
-                    All Categories
-                </option>
+                <p class="page-heading__subtitle">
+                    Manage bibliographic titles and their individual physical copies.
+                </p>
+            </div>
 
-                <option th:each="category : ${categories}"
-                        th:value="${category.id}"
-                        th:text="${category.name}"
-                        th:selected="${categoryId == category.id}">
-                    Category Name
-                </option>
-            </select>
-        </div>
+            <section class="catalog-panel"
+                     aria-label="Catalog records">
 
-        <button type="submit">Apply Filters</button>
-    </form>
+                <form class="catalog-filters"
+                      th:action="@{/catalog}"
+                      method="get">
 
-    <p th:text="|${books.totalElements} book title(s) found|">
-        0 book titles found
-    </p>
+                    <div class="catalog-field catalog-field--search">
+                        <label for="searchText">
+                            Search catalog
+                        </label>
 
-    <div class="table-wrapper">
+                        <input id="searchText"
+                               type="search"
+                               name="searchText"
+                               placeholder="Search title, author or ISBN"
+                               th:value="${searchText}">
+                    </div>
 
-        <table th:if="${!books.empty}">
-            <thead>
-            <tr>
-                <th>Title</th>
-                <th>Authors</th>
-                <th>ISBN</th>
-                <th>Categories</th>
-                <th>Copies</th>
-                <th>Available</th>
-                <th>Status</th>
-            </tr>
-            </thead>
+                    <div class="catalog-field catalog-field--category">
+                        <label for="categoryId">
+                            Category
+                        </label>
 
-            <tbody>
-            <tr th:each="book : ${books.content}">
-                <td th:text="${book.title}">Example Title</td>
-                <td th:text="${book.authors}">Example Author</td>
+                        <select id="categoryId" name="categoryId">
+                            <option value=""
+                                    th:selected="${categoryId == null}">
+                                All categories
+                            </option>
 
-                <td th:text="${book.isbn != null ? book.isbn : '-'}">
-                    -
-                </td>
+                            <option th:each="category : ${categories}"
+                                    th:value="${category.id}"
+                                    th:text="${category.name}"
+                                    th:selected="${categoryId == category.id}">
+                                Category
+                            </option>
+                        </select>
+                    </div>
 
-                <td>
-                    <span th:each="category : ${book.categories}"
-                          th:text="${category.name}"
-                          th:classappend="${category.primary} ? 'primary' : ''"
-                          class="badge">
-                        Category
+                    <div class="catalog-field catalog-field--status">
+                        <label for="active">
+                            Title status
+                        </label>
+
+                        <select id="active" name="active">
+                            <option value=""
+                                    th:selected="${active == null}">
+                                All statuses
+                            </option>
+
+                            <option value="true"
+                                    th:selected="${active != null and active}">
+                                Active
+                            </option>
+
+                            <option value="false"
+                                    th:selected="${active != null and !active}">
+                                Inactive
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="catalog-field catalog-field--sort">
+                        <label for="sortBy">
+                            Sort by
+                        </label>
+
+                        <select id="sortBy" name="sortBy">
+                            <option value="title"
+                                    th:selected="${sortBy == 'title'}">
+                                Title
+                            </option>
+
+                            <option value="authors"
+                                    th:selected="${sortBy == 'authors'}">
+                                Author
+                            </option>
+
+                            <option value="isbn"
+                                    th:selected="${sortBy == 'isbn'}">
+                                ISBN
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="catalog-field catalog-field--direction">
+                        <label for="ascending">
+                            Direction
+                        </label>
+
+                        <select id="ascending" name="ascending">
+                            <option value="true"
+                                    th:selected="${ascending}">
+                                Ascending
+                            </option>
+
+                            <option value="false"
+                                    th:selected="${!ascending}">
+                                Descending
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="catalog-filter-actions">
+                        <button class="button button--primary"
+                                type="submit">
+                            Search
+                        </button>
+
+                        <a class="button button--secondary"
+                           th:href="@{/catalog}">
+                            Reset Filters
+                        </a>
+                    </div>
+
+                </form>
+
+                <div class="catalog-toolbar">
+
+                    <h2 class="catalog-toolbar__heading">
+                        Catalog titles
+
+                        <span class="catalog-toolbar__count"
+                              th:text="${books.totalElements}">
+                            0
+                        </span>
+                    </h2>
+
+                    <p class="catalog-toolbar__description">
+                        Bibliographic titles and physical inventory
+                    </p>
+
+                </div>
+
+                <div class="catalog-table-wrapper"
+                     th:if="${!books.empty}">
+
+                    <table class="catalog-table">
+                        <thead>
+                        <tr>
+                            <th scope="col">Book title</th>
+                            <th scope="col">Author</th>
+                            <th scope="col">ISBN</th>
+                            <th scope="col">Categories</th>
+                            <th scope="col">Total copies</th>
+                            <th scope="col">Available</th>
+                            <th scope="col">Title status</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr th:each="book : ${books.content}">
+
+                            <td>
+                                <span class="catalog-table__title"
+                                      th:text="${book.title}">
+                                    Example Book Title
+                                </span>
+                            </td>
+
+                            <td th:text="${book.authors}">
+                                Example Author
+                            </td>
+
+                            <td class="catalog-table__muted"
+                                th:text="${book.isbn != null ? book.isbn : '-'}">
+                                -
+                            </td>
+
+                            <td>
+                                <span th:each="category : ${book.categories}"
+                                      class="catalog-category"
+                                      th:classappend="${category.primary} ? 'catalog-category--primary' : ''"
+                                      th:text="${category.name}">
+                                    Category
+                                </span>
+                            </td>
+
+                            <td th:text="${book.totalCopies}">
+                                0
+                            </td>
+
+                            <td th:text="${book.availableCopies}">
+                                0
+                            </td>
+
+                            <td>
+                                <span class="catalog-status"
+                                      th:classappend="${book.active} ? 'catalog-status--active' : 'catalog-status--inactive'"
+                                      th:text="${book.active ? 'Active' : 'Inactive'}">
+                                    Active
+                                </span>
+                            </td>
+
+                        </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+
+                <div class="catalog-empty"
+                     th:if="${books.empty}">
+                    No book titles match the selected filters.
+                </div>
+
+                <nav class="catalog-pagination"
+                     aria-label="Catalog pagination"
+                     th:if="${books.totalPages > 1}">
+
+                    <a class="catalog-pagination__link"
+                       th:if="${books.hasPrevious()}"
+                       th:href="@{/catalog(
+                           searchText=${searchText},
+                           categoryId=${categoryId},
+                           active=${active},
+                           sortBy=${sortBy},
+                           ascending=${ascending},
+                           page=${books.number - 1}
+                       )}">
+                        Previous
+                    </a>
+
+                    <span class="catalog-pagination__spacer"
+                          th:unless="${books.hasPrevious()}"></span>
+
+                    <span class="catalog-pagination__info"
+                          th:text="|Page ${books.number + 1} of ${books.totalPages}|">
+                        Page 1 of 1
                     </span>
-                </td>
 
-                <td th:text="${book.totalCopies}">0</td>
-                <td th:text="${book.availableCopies}">0</td>
+                    <a class="catalog-pagination__link"
+                       th:if="${books.hasNext()}"
+                       th:href="@{/catalog(
+                           searchText=${searchText},
+                           categoryId=${categoryId},
+                           active=${active},
+                           sortBy=${sortBy},
+                           ascending=${ascending},
+                           page=${books.number + 1}
+                       )}">
+                        Next
+                    </a>
 
-                <td th:text="${book.active ? 'Active' : 'Inactive'}">
-                    Active
-                </td>
-            </tr>
-            </tbody>
-        </table>
+                    <span class="catalog-pagination__spacer"
+                          th:unless="${books.hasNext()}"></span>
 
-        <div class="empty" th:if="${books.empty}">
-            No book titles match the selected filters.
-        </div>
+                </nav>
+
+            </section>
+
+        </main>
+
     </div>
 
-    <nav class="pagination"
-         aria-label="Catalog pagination"
-         th:if="${books.totalPages > 1}">
+</div>
 
-        <a th:if="${books.hasPrevious()}"
-           th:href="@{/catalog(
-               searchText=${searchText},
-               categoryId=${categoryId},
-               active=${active},
-               sortBy=${sortBy},
-               ascending=${ascending},
-               page=${books.number - 1}
-           )}">
-            Previous
-        </a>
-
-        <span th:unless="${books.hasPrevious()}"></span>
-
-        <span th:text="|Page ${books.number + 1} of ${books.totalPages}|">
-            Page 1 of 1
-        </span>
-
-        <a th:if="${books.hasNext()}"
-           th:href="@{/catalog(
-               searchText=${searchText},
-               categoryId=${categoryId},
-               active=${active},
-               sortBy=${sortBy},
-               ascending=${ascending},
-               page=${books.number + 1}
-           )}">
-            Next
-        </a>
-
-        <span th:unless="${books.hasNext()}"></span>
-    </nav>
-</main>
 </body>
 </html>
