@@ -79,11 +79,16 @@ a:hover {
 }
 
 .app-sidebar {
+    position: sticky;
+    top: 0;
+    align-self: start;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     gap: 40px;
-    min-height: 100vh;
+    height: 100vh;
+    min-height: 0;
+    overflow-y: auto;
     padding: 32px 16px;
     background: var(--color-primary);
     color: #ffffff;
