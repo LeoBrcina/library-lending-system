@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Book Title | P03 Library</title>
+    <link rel="stylesheet" th:href="@{/css/library.css(v=3)}">
+    <link rel="stylesheet" th:href="@{/css/book-title-form.css(v=2)}">
+</head>
+<body>
+<div class="app-shell">
+
+    <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+
+    <div class="app-workspace">
+        <header th:replace="~{fragments/workspace-header :: workspaceHeader}">
+        </header>
+
+        <main class="page-content page-content--book-form">
+
+            <nav class="form-breadcrumb" aria-label="Breadcrumb">
+                <a th:href="@{/catalog}">Book Catalog</a>
+                <span aria-hidden="true">/</span>
+                <a th:href="@{/catalog/{id}(id=${bookId})}">
+                    Book Title Details
+                </a>
+                <span aria-hidden="true">/</span>
+                <span aria-current="page">Edit Book Title</span>
+            </nav>
+
+            <div class="page-heading">
+                <h1>Edit Book Title</h1>
+                <p class="page-heading__subtitle">
+                    Update bibliographic information and subject categories.
+                    Changes will be saved to the existing book title.
+                </p>
+            </div>
+
+            <form th:action="@{/catalog/{id}/edit(id=${bookId})}"
+                  th:object="${bookTitleForm}"
+                  method="post"
+                  class="book-title-form">
+
+                <div class="form-error-summary"
+                     role="alert"
+                     th:if="${#fields.hasAnyErrors()}">
+
+                    <p class="form-error-summary__heading">
+                        Please correct the following errors:
+                    </p>
+
+                    <ul class="form-error-summary__list">
+                        <li th:each="error : ${#fields.allErrors()}"
+                            th:text="${error}">
+                            Validation error
+                        </li>
+                    </ul>
+                </div>
+
+                <section class="form-panel"
+                         aria-labelledby="bibliographic-heading">
+
+                    <div class="form-panel__heading">
+                        <h2 id="bibliographic-heading">
+                            Bibliographic Information
+                        </h2>
+                        <p>
+                            Edit the information that identifies
+                            this book title.
+                        </p>
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-field form-field--full">
+                            <label for="title">
+                                Title <span class="required">*</span>
+                            </label>
+
+                            <input id="title"
+                                   type="text"
+                                   th:field="*{title}"
+                                   th:errorclass="form-field--invalid"
+                                   maxlength="255"
+                                   required
+                                   aria-describedby="title-error">
+
+                            <p id="title-error"
+                               class="field-error"
+                               th:if="${#fields.hasErrors('title')}"
+                               th:errors="*{title}">
+                                Title is required.
+                            </p>
+                        </div>
+
+                        <div class="form-field form-field--full">
+                            <label for="authors">
+                                Authors <span class="required">*</span>
+                            </label>
+
+                            <input id="authors"
+                                   type="text"
+                                   th:field="*{authors}"
+                                   th:errorclass="form-field--invalid"
+                                   maxlength="500"
+                                   required
+                                   aria-describedby="authors-error">
+
+                            <p id="authors-error"
+                               class="field-error"
+                               th:if="${#fields.hasErrors('authors')}"
+                               th:errors="*{authors}">
+                                Authors are required.
+                            </p>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="isbn">ISBN</label>
+
+                            <input id="isbn"
+                                   type="text"
+                                   th:field="*{isbn}"
+                                   th:errorclass="form-field--invalid"
+                                   maxlength="20"
+                                   aria-describedby="isbn-error">
+
+                            <p id="isbn-error"
+                               class="field-error"
+                               th:if="${#fields.hasErrors('isbn')}"
+                               th:errors="*{isbn}">
+                                Invalid ISBN.
+                            </p>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="publisher">Publisher</label>
+
+                            <input id="publisher"
+                                   type="text"
+                                   th:field="*{publisher}"
+                                   th:errorclass="form-field--invalid"
+                                   maxlength="255"
+                                   aria-describedby="publisher-error">
+
+                            <p id="publisher-error"
+                               class="field-error"
+                               th:if="${#fields.hasErrors('publisher')}"
+                               th:errors="*{publisher}">
+                                Invalid publisher.
+                            </p>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="publicationYear">
+                                Publication year
+                            </label>
+
+                            <input id="publicationYear"
+                                   type="number"
+                                   min="1450"
+                                   max="2200"
+                                   th:field="*{publicationYear}"
+                                   th:errorclass="form-field--invalid"
+                                   aria-describedby="year-error">
+
+                            <p id="year-error"
+                               class="field-error"
+                               th:if="${#fields.hasErrors('publicationYear')}"
+                               th:errors="*{publicationYear}">
+                                Invalid publication year.
+                            </p>
+                        </div>
+
+                        <div class="form-field form-field--full">
+                            <label for="description">Description</label>
+
+                            <textarea id="description"
+                                      rows="5"
+                                      th:field="*{description}"></textarea>
+                        </div>
+
+                    </div>
+                </section>
+
+                <section class="form-panel"
+                         aria-labelledby="categories-heading">
+
+                    <div class="form-panel__heading">
+                        <h2 id="categories-heading">Categories</h2>
+                        <p>
+                            Update the subject classifications.
+                            At least one category is required.
+                        </p>
+                    </div>
+
+                    <fieldset class="category-fieldset">
+                        <legend>
+                            Selected categories
+                            <span class="required">*</span>
+                        </legend>
+
+                        <div class="category-options">
+                            <label class="category-option"
+                                   th:each="category : ${categories}">
+
+                                <input type="checkbox"
+                                       th:field="*{categoryIds}"
+                                       th:value="${category.id}">
+
+                                <span th:text="${category.name}">
+                                    Category name
+                                </span>
+                            </label>
+                        </div>
+
+                        <p class="field-error"
+                           th:if="${#fields.hasErrors('categoryIds')}"
+                           th:errors="*{categoryIds}">
+                            Select at least one category.
+                        </p>
+                    </fieldset>
+
+                    <div class="form-field form-field--primary">
+                        <label for="primaryCategoryId">
+                            Primary category
+                            <span class="required">*</span>
+                        </label>
+
+                        <select id="primaryCategoryId"
+                                th:field="*{primaryCategoryId}"
+                                th:errorclass="form-field--invalid"
+                                required
+                                aria-describedby="primary-category-help primary-category-error">
+
+                            <option value="">
+                                Select primary category
+                            </option>
+
+                            <option th:each="category : ${categories}"
+                                    th:value="${category.id}"
+                                    th:text="${category.name}">
+                                Category name
+                            </option>
+                        </select>
+
+                        <p id="primary-category-help" class="form-help">
+                            The primary category must also be selected above.
+                        </p>
+
+                        <p id="primary-category-error"
+                           class="field-error"
+                           th:if="${#fields.hasErrors('primaryCategoryId')}"
+                           th:errors="*{primaryCategoryId}">
+                            Select a primary category.
+                        </p>
+                    </div>
+
+                </section>
+
+                <div class="form-actions">
+                    <a class="button button--secondary"
+                       th:href="@{/catalog/{id}(id=${bookId})}">
+                        Cancel
+                    </a>
+
+                    <button class="button button--primary"
+                            type="submit">
+                        Save Changes
+                    </button>
+                </div>
+
+            </form>
+
+        </main>
+    </div>
+</div>
+</body>
+</html>

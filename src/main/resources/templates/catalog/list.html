@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book Catalog | P03 Library</title>
-    <link rel="stylesheet" th:href="@{/css/library.css(v=2)}">
+    <link rel="stylesheet" th:href="@{/css/library.css(v=4)}">
 </head>
 <body>
 <div class="app-shell">
@@ -126,9 +126,17 @@
                             0
                         </span>
                     </h2>
-                    <p class="catalog-toolbar__description">
-                        Bibliographic titles and physical inventory
-                    </p>
+
+                    <div class="catalog-toolbar__actions">
+                        <p class="catalog-toolbar__description">
+                            Bibliographic titles and physical inventory
+                        </p>
+
+                        <a class="button button--primary"
+                           th:href="@{/catalog/new}">
+                            Add Book Title
+                        </a>
+                    </div>
                 </div>
 
                 <!-- Desktop and tablet catalog table -->
@@ -151,10 +159,11 @@
                         <tbody>
                         <tr th:each="book : ${books.content}">
                             <td>
-                                <span class="catalog-table__title"
-                                      th:text="${book.title}">
+                                <a class="catalog-table__title"
+                                   th:href="@{/catalog/{id}(id=${book.id})}"
+                                   th:text="${book.title}">
                                     Example Book Title
-                                </span>
+                                </a>
                             </td>
 
                             <td th:text="${book.authors}">
@@ -213,9 +222,11 @@
                         </div>
 
                         <div class="catalog-mobile-card__details">
-                            <h3 class="catalog-mobile-card__title"
-                                th:text="${book.title}">
-                                Example Book Title
+                            <h3 class="catalog-mobile-card__title">
+                                <a th:href="@{/catalog/{id}(id=${book.id})}"
+                                   th:text="${book.title}">
+                                    Example Book Title
+                                </a>
                             </h3>
 
                             <p class="catalog-mobile-card__author"

@@ -800,3 +800,38 @@ a.sidebar-navigation__item:hover {
         margin-top: 4px;
     }
 }
+
+/* Catalog navigation actions. */
+
+.catalog-toolbar__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.catalog-table__title,
+.catalog-mobile-card__title a {
+    color: var(--color-primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.catalog-table__title:hover,
+.catalog-mobile-card__title a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 767px) {
+    .catalog-toolbar__actions {
+        width: 100%;
+        align-items: stretch;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .catalog-toolbar__actions .button {
+        width: 100%;
+    }
+}
