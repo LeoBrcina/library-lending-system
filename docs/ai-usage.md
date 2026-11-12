@@ -3,7 +3,7 @@
 **Project:** P03 Library Lending System  
 **Course:** Rapid Development of Java Applications Using Programming Frameworks (2026/27)  
 **Started:** 2026-10-29  
-**Last updated:** 2026-11-12
+**Last updated:** 2026-11-13
 
 ## M1 — Planning and project setup
 
@@ -293,19 +293,31 @@
 - **Verification:** Nine new unit tests covered supported and unsupported condition/status values, missing values, inventory-code validation, normalization and setter behavior. The developer reported all 51 tests passing with `./mvnw verify`. No database migration or new database constraint was applied.
 - **Files:** `src/main/java/hr/algebra/librarylendingsystem/domain/BookCopy.java`, `src/main/java/hr/algebra/librarylendingsystem/domain/BookCopyCondition.java`, `src/main/java/hr/algebra/librarylendingsystem/domain/BookCopyStatus.java` and `src/test/java/hr/algebra/librarylendingsystem/BookCopyValidationTests.java`.
 - **Remaining work:** Complete circulation-aware status transitions and database allowed-value constraints.
-- **Git status:** Step 19.1A changes are locally verified. Commit and push remain pending.
+- **Git status:** Step 19.1A was locally verified at this checkpoint; it was subsequently included in the committed Book Copy service work.
 
 ### AI-027 — Implement Book Copy service and integration tests
 
 - **Date:** 2026-11-12.
 - **Task:** Implement the physical-copy service for creation, retrieval, metadata updates, withdrawal, safe deletion and maintenance release.
 - **AI assistance:** Prepared service interfaces, DTOs, exceptions, repository queries and integration tests. Reviewed the inventory rules and identified an inconsistency in handling copies with `POOR` condition.
-- **Developer work:** Implemented the service classes and tests in IntelliJ, corrected the `DuplicateInventoryCodeException` filename and ran Maven verification after each development step.
+- **Developer work:** Implemented the service classes and tests in IntelliJ, corrected the `DuplicateInventoryCodeException` filename, fixed the `POOR` condition behavior and ran Maven verification after each development step.
 - **Changes and decisions:** Kept inventory updates separate from loan and reservation operations. Added validation for inventory codes, restrictions on protected circulation statuses, historical-reference checks and pessimistic locking for administrative operations. Maintenance release requires an eligible condition and checks for active loans, allocated reservations and waiting reservations.
-- **Verification:** Seven creation/retrieval tests, eight update tests, ten lifecycle tests and nine maintenance tests were added. The developer reported successful builds and 85 passing tests after Step 19.1E. The `POOR` condition correction was identified during review and has not yet been verified.
+- **Verification:** Seven creation/retrieval tests, eight update tests, ten lifecycle tests and nine maintenance tests were added. The developer reported 85 passing tests after Step 19.1E, followed by successful regression verification of the corrected `POOR` behavior. The completed service checkpoint was committed and pushed, and the developer reported passing CI.
 - **Files:** `BookCopyService.java`, `BookCopyServiceImpl.java`, `BookCopyCommand.java`, `BookCopyDetails.java`, `BookCopyRepository.java`, `BookCopyNotFoundException.java`, `InvalidBookCopyException.java`, `DuplicateInventoryCodeException.java`, `BookCopyServiceIntegrationTests.java`, `BookCopyUpdateIntegrationTests.java`, `BookCopyLifecycleIntegrationTests.java` and `BookCopyMaintenanceIntegrationTests.java`.
-- **Remaining work:** Verify the `POOR` condition correction, complete the service review and implement the physical-copy management screens.
-- **Git status:** Local implementation verified; commit pending.
+- **Remaining work:** Implement full circulation-aware transitions, concurrency tests and the other application workflows.
+- **Git commit:** `e3fc57a` (`implement and test physical book copy management service`).
+
+### AI-028 — Implement Physical Copy management screens and actions
+
+- **Date:** 2026-11-12 to 2026-11-13.
+- **Task:** Complete librarian-facing Physical Copy management with inventory listing, creation, editing, maintenance release, withdrawal and safe deletion.
+- **AI assistance:** Proposed the Spring MVC controller endpoints, Thymeleaf forms, inventory table, confirmation screens and associated MVC and integration tests. Helped identify and correct future acquisition-date acceptance, duplicate field-error messages and the visual appearance of the Delete action.
+- **Developer work:** Implemented the changes in IntelliJ, reviewed the application against the approved Figma design, disabled Dark Reader for the local application after identifying its CSS overrides and verified the actual color palette. Tested the inventory workflow in the browser, including validation, restricted actions, confirmation pages and mobile scrolling. Ran the Maven test suite repeatedly, committed and pushed the completed inventory-management work through withdrawal, and reported passing CI. Subsequently implemented and tested permanent deletion.
+- **Changes and decisions:** Reused Book Copy service operations and DTOs instead of putting business rules in controllers. Kept creation and editing separate from circulation. Made acquisition dates optional but not future-dated. Added confirmation pages for withdrawal and deletion and POST endpoints for state changes. Kept the horizontally scrollable mobile inventory table instead of adding separate cards. Used neutral styling for Edit and Withdraw, green for Release and red for Delete.
+- **Verification:** The developer reported successful automated tests and manual checks for inventory listing, Add, Edit, Release, Withdraw and Delete. Manual checks included status changes, inventory counts, error feedback, cancellation, protected statuses and responsive layout. The developer confirmed that the final red Delete button styling was corrected and that the full test suite passed. The preceding inventory-management checkpoint was pushed and CI passed. The final deletion and documentation changes have not yet been committed.
+- **Limitations:** A read-only join between `BookCopies` and `Loans` returned no rows in the local development database. Therefore, deletion rejection due specifically to existing loan history was not demonstrated manually. Service integration tests cover historical-reference restrictions. Concurrent circulation operations and authorization remain future work.
+- **Files:** `BookCopyManagementController.java`, `BookCopyForm.java`, `BookCopyService.java`, `BookCopyServiceImpl.java`, `BookTitleManagementController.java`, `BookTitleManagementControllerTests.java`, `BookCopyManagementControllerTests.java`, `BookCopyEditControllerTests.java`, `BookCopyReleaseControllerTests.java`, `BookCopyWithdrawControllerTests.java`, `BookCopyDeleteControllerTests.java`, `BookCopyAcquisitionDateIntegrationTests.java`, `BookCopyLookupIntegrationTests.java`, `templates/catalog/details.html`, `templates/catalog/copies/create.html`, `templates/catalog/copies/edit.html`, `templates/catalog/copies/withdraw.html`, `templates/catalog/copies/delete.html`, `static/css/book-copy-list.css` and `static/css/book-copy-actions.css`.
+- **Remaining work:** Commit and push the safe deletion workflow, verify CI and compare the completed inventory work against the professor's M2 specification.
 
 ## Verification summary
 
@@ -361,7 +373,7 @@
 | Book Copy validation | Nine focused unit tests reported passing. |
 | Full Maven verification | 51 tests reported passing after Step 19.1A. |
 | Database changes | No new migration introduced for Step 19.1A. |
-| Book Copy Git status | Local implementation verified; commit pending. |
+| Book Copy Git status | Changes subsequently included in the committed service checkpoint. |
 
 ### M2 — Physical-copy service verification, 2026-11-12
 
@@ -377,16 +389,36 @@
 | Build after Step 19.1C | 66 tests reported passing. |
 | Build after Step 19.1D | 76 tests reported passing. |
 | Build after Step 19.1E | 85 tests reported passing. |
-| Final review | `POOR` condition handling identified for correction and additional regression tests. |
+| Final review | `POOR` condition handling corrected and regression-tested. |
 | Database migrations | No new Flyway migrations introduced. |
-| Git | Book Copy service commit and push pending. |
+| Git | Service implementation committed and pushed; CI passed as reported by the developer. |
+
+### M2 — Physical-copy web verification, 2026-11-12 to 2026-11-13
+
+| Area | Verified result |
+|---|---|
+| Inventory listing | Physical-copy details, statuses and inventory counts displayed on Book Title Details. |
+| Add Physical Copy | Form, required fields, optional date and service-derived initial status manually verified. |
+| Acquisition-date validation | Future dates rejected in creation and editing; regression tests reported passing. |
+| Edit Physical Copy | Prefilled form, metadata changes and protected-status restrictions tested. |
+| Maintenance release | Repaired copies released through POST; status and availability changes checked. |
+| Withdrawal | Confirmation, cancellation, success feedback and retained withdrawn records verified. |
+| Permanent deletion | Confirmation, cancellation, eligible deletions, success feedback and inventory count updates verified. |
+| Validation presentation | Duplicate field-level messages removed from Physical Copy forms. |
+| Responsive interface | Mobile inventory table scrolling and confirmation pages manually checked. |
+| Design review | Local Dark Reader overrides identified and disabled; underlying green and ivory palette confirmed. |
+| Historical deletion protection | Service tests cover historical references; no matching loan records found during manual SQL inspection. |
+| Local build | Full Maven verification reported passing after the final Delete styling correction. |
+| Git and CI | Inventory-management work through withdrawal pushed and CI passed. Delete changes pending commit and CI. |
 
 ## Remaining work
 
-The database migrations, permanent reference data, catalog JPA mappings, repositories, Book Title management screens, Book Copy service operations, integration tests and GitHub Actions CI workflow are in place.
+The database migrations, permanent reference data, catalog JPA mappings, repositories, Book Title management screens, Book Copy service operations, physical-copy management screens, integration tests and GitHub Actions CI workflow are in place.
 
-The remaining application tables still require Java mappings and repositories. Physical-copy management screens, circulation workflows, security, REST API, Gemini integration, scheduling, internationalization and deployment remain pending.
+The remaining application tables still require Java mappings and repositories. Circulation workflows, security, REST API, Gemini integration, scheduling, internationalization and deployment remain pending.
 
 Additional test categories, concurrency verification, service coverage and performance measurements are also required. No coverage percentages, AI evaluation scores or production deployment results have been claimed.
 
 The M2 Figma work includes reusable components, desktop and mobile screens, a clickable prototype, contrast measurements, design rationale and PDF export. The implemented application's accessibility and functional behavior must be tested separately from the prototype.
+
+The physical-copy management workflow is locally verified through deletion. The remaining immediate checkpoint is to commit and push deletion and documentation, confirm GitHub Actions and review milestone requirements.

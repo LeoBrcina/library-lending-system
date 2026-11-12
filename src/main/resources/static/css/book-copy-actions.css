@@ -53,16 +53,20 @@
     margin: 0;
 }
 
-.button--danger {
+.button--danger,
+.button--danger:visited {
     background: #a53030;
     color: #ffffff;
     border: 1px solid #a53030;
+    text-decoration: none;
 }
 
-.button--danger:hover {
+.button--danger:hover,
+.button--danger:focus-visible {
     background: #842626;
     border-color: #842626;
     color: #ffffff;
+    text-decoration: none;
 }
 
 @media (max-width: 767px) {

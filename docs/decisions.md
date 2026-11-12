@@ -2,7 +2,7 @@
 
 **Project:** P03 Library Lending System  
 **Course:** Rapid Development of Java Applications Using Programming Frameworks (2026/27)  
-**Last updated:** 2026-11-12
+**Last updated:** 2026-11-13
 
 The professor's official assignment takes precedence over project decisions. An accepted decision does not necessarily mean that the corresponding feature has been implemented.
 
@@ -37,10 +37,13 @@ The professor's official assignment takes precedence over project decisions. An 
 | D-015 | Automatically allocate an available copy to the first eligible waiting reservation. | Transactional service implementation planned. |
 | D-016 | Allocated reservations have a **three-day pickup deadline**. Expired holds release the copy and promote the next eligible member. | Deadline and expiration logic pending. |
 | D-017 | If an allocated copy becomes damaged or unavailable before pickup, the reservation retains its original queue priority while allocation is reconsidered. | Service implementation planned. |
-| D-018 | Keep `BookCopy.CopyCondition` separate from `BookCopy.Status`. Condition represents physical quality with the accepted values `NEW`, `GOOD`, `FAIR`, `POOR` and `DAMAGED`. Status represents circulation state with the accepted values `AVAILABLE`, `ON_LOAN`, `ON_HOLD`, `MAINTENANCE` and `WITHDRAWN`. | Separate columns implemented in V1. Java enums and entity-level validation implemented in M2 Step 19.1A. String-based JPA mappings retained. Database value constraints and full circulation transitions pending. |
+| D-018 | Keep `BookCopy.CopyCondition` separate from `BookCopy.Status`. Condition represents physical quality with the accepted values `NEW`, `GOOD`, `FAIR`, `POOR` and `DAMAGED`. Status represents circulation state with the accepted values `AVAILABLE`, `ON_LOAN`, `ON_HOLD`, `MAINTENANCE` and `WITHDRAWN`. | Separate columns implemented in V1. Java enums and entity-level validation implemented. Creating or updating a copy to `POOR` or `DAMAGED` places it in `MAINTENANCE`. String-based JPA mappings retained. Database allowed-value constraints and full circulation transitions pending. |
 | D-019 | Store `BookTitle.Authors` as text and allow ISBN to be optional. | Implemented in V1. |
 | D-020 | Link fulfilled reservations to loans using nullable, unique `Loans.ReservationId`. | Foreign key and unique constraint implemented in V1. Fulfillment logic pending. |
-| D-054 | Separate physical-copy administration from circulation. Allow metadata changes only for available or maintenance copies. Preserve loan and reservation history during withdrawal or deletion. Maintenance release requires an active title, acceptable physical condition and no conflicting loan, hold or waiting reservation. | Service operations and integration tests implemented in M2 Steps 19.1B–19.1E. The agreed policy treats `POOR` and `DAMAGED` copies as requiring maintenance; the `POOR` creation/update correction remains to be verified. |
+| D-054 | Separate physical-copy administration from circulation. Allow metadata changes only for available or maintenance copies. Preserve loan and reservation history during withdrawal or deletion. Maintenance release requires an active title, acceptable physical condition and no conflicting loan, hold or waiting reservation. | Service operations, integration tests and librarian-facing Add, Edit, Withdraw, Delete and Release workflows implemented and verified in M2 Steps 19.1 and 19.2. Withdrawal retains the copy record; deletion is refused when history exists. |
+| D-055 | Acquisition dates are optional but cannot be in the future. Keep this validation at the form and service layers. | Implemented for physical-copy creation and editing. Future dates are rejected; missing dates remain valid. |
+| D-056 | Require confirmation before withdrawal and permanent deletion. Use POST for state changes, show meaningful errors and keep service-layer rules authoritative. | Separate Thymeleaf confirmation pages and MVC endpoints implemented and tested. Release uses POST. |
+| D-057 | Use the existing responsive inventory table for physical copies, with horizontal scrolling on narrow screens. | Implemented and manually checked on mobile. A separate physical-copy card view was considered but not adopted. |
 
 ## 4. Persistence and integrity
 
@@ -50,10 +53,10 @@ The professor's official assignment takes precedence over project decisions. An 
 | D-022 | Use 12 application tables: `BookTitles`, `BookCopies`, `Categories`, `BookCategories`, `AppUsers`, `Roles`, `UserRoles`, `Loans`, `FineAccruals`, `Reservations`, `PurchaseSuggestions` and `AiSuggestionResults`. | All 12 tables created by V1 and verified in PostgreSQL. |
 | D-023 | Use singular PascalCase Java entities, plural PascalCase logical SQL table names and PascalCase logical column names. PostgreSQL lowercase folding is accepted; JPA mappings must match. | SQL naming and catalog JPA mappings verified. Remaining mappings pending. |
 | D-024 | Model `BookCategories` as an attributed association entity with `IsPrimary`. Allow at most one primary category per title. | Composite primary key and partial unique index implemented in V1. JPA mapping and repository tests implemented. |
-| D-025 | Preserve loans, fine accruals and important reservation history. Allow physical deletion where safe; use withdrawal or deactivation when history must be retained. | Restrictive foreign keys implemented in V1–V2. Book Copy deletion and withdrawal checks implemented and tested. Other historical deletion rules remain pending. |
+| D-025 | Preserve loans, fine accruals and important reservation history. Allow physical deletion where safe; use withdrawal or deactivation when history must be retained. | Restrictive foreign keys implemented in V1–V2. Book Copy deletion and withdrawal checks implemented and tested at service level and exposed through the librarian interface. Other historical deletion rules remain pending. |
 | D-026 | Use service-level transactions, database constraints and suitable locking for checkout, renewal, return and reservation allocation. | Selected constraints implemented in V1–V2. Book Copy administrative operations use pessimistic row locking. Circulation transactions and concurrency tests pending. |
 | D-027 | Prefer lazy JPA fetching and use fetch joins or entity graphs when needed. Document an N+1 problem and its before/after SQL. | Lazy catalog mappings implemented. N+1 measurement and optimization evidence pending. |
-| D-028 | Separate controllers, services and repositories. Use constructor injection, DTOs/forms, validation and appropriate exception handling. | Applied to Book Title management and Book Copy service operations. Remaining application features pending. |
+| D-028 | Separate controllers, services and repositories. Use constructor injection, DTOs/forms, validation and appropriate exception handling. | Applied to Book Title and Physical Copy management, including the web forms, service DTOs and administrative actions. Remaining application features pending. |
 | D-052 | Keep applied Flyway versioned migrations unchanged. Use new migrations for later schema modifications. | Applied during V1–V3 development. |
 | D-053 | Separate permanent reference data from development-only demonstration data. Do not include default user credentials or date-dependent demonstration records in production migrations. | V3 contains three roles and ten categories. Separate development-only catalog fixtures implemented. |
 
@@ -101,7 +104,7 @@ ADR-002 will document the provider interface, structured output, error handling 
 | D-032 | Use Java 25, Spring Boot 4.1, Maven Wrapper and IntelliJ IDEA. | Java 25.0.5, Spring Boot 4.1.2, Maven Wrapper 3.10.0 and IntelliJ IDEA 2026.2.3 verified. |
 | D-033 | Run PostgreSQL 17 through Docker Compose locally, bound to `127.0.0.1:5433`, with a persistent named volume. | PostgreSQL 17.11 and V1–V3 migrations verified. |
 | D-034 | Use ignored `.env` files and local IntelliJ environment settings for credentials. Commit only placeholders in `.env.example`. | Applied locally. |
-| D-035 | Use `LeoBrcina/library-lending-system` and small descriptive commits without conventional prefixes. | Repository active; catalog implementation committed to `main`. Book Copy service changes pending commit. |
+| D-035 | Use `LeoBrcina/library-lending-system` and small descriptive commits without conventional prefixes. | Repository active. Book Title management, Book Copy service and physical-copy inventory workflows through withdrawal committed and pushed to `main`; CI passed as reported by the developer. Physical-copy deletion is locally verified and pending commit. |
 | D-036 | Maintain three ADRs, `docs/ai-usage.md`, `docs/ai-evaluation.md` and Figma documentation. | ADR-001 and initial documentation present; ADR-002, ADR-003 and evaluation document pending. |
 | D-037 | Use the professor's assignment and uploaded lectures/demos as primary references. Only the two authorized professor GitHub repositories may be used as external code references. | Ongoing policy. |
 | D-038 | Implement one major phase at a time, inspect current files before changing them and verify work before committing. | Ongoing workflow policy. |
@@ -198,17 +201,34 @@ A short interval can demonstrate repeated scheduling during the defense, but it 
 - A repaired copy may be released from maintenance only if its title is active, its condition is `NEW`, `GOOD` or `FAIR`, and there is no active loan, allocated reservation or waiting reservation for the title.
 - Seven create/list integration tests, eight update tests, ten lifecycle tests and nine maintenance-release tests were added.
 - The developer reported 58 passing tests after Step 19.1B, 66 after 19.1C, 76 after 19.1D and 85 after 19.1E.
-- Review identified inconsistent handling of the `POOR` condition in creation and update. The correction is pending implementation and regression testing.
+- The `POOR` creation/update condition handling was corrected and regression-tested. `POOR` and `DAMAGED` copies enter maintenance.
 - No new Flyway migrations were introduced.
-- Database value constraints, complete circulation locking, concurrent duplicate-code handling and physical-copy management screens remain pending.
-- The service changes have been verified locally but have not yet been committed.
+- Database allowed-value constraints, complete circulation locking and concurrent duplicate-code handling remain future work.
+- The service implementation was committed and pushed in `e3fc57a`; the developer reported that GitHub Actions passed.
+
+### M2 physical-copy web management — 2026-11-12 to 2026-11-13
+
+- Step 19.2A added a read-only physical-copy inventory table to Book Title Details, showing inventory codes, conditions, circulation statuses, acquisition dates and total/available counts.
+- Step 19.2B added an Add Physical Copy form with validation, duplicate-code feedback and service-driven initial circulation status.
+- Future acquisition dates are rejected in the form and service; acquisition dates remain optional.
+- Step 19.2C added prepopulated Edit forms and title-scoped copy lookup. Editing is restricted to available or maintenance copies.
+- Physical Copy Create and Edit validation summaries were refined so field-level errors are not repeated at the top of the page.
+- Step 19.2D.1 added Release from Maintenance through POST. The service checks current condition, active title and conflicting circulation or waiting reservations.
+- Step 19.2D.2 added Withdraw with a dedicated confirmation page. Withdrawn copies remain recorded but are not available for circulation.
+- Step 19.2D.3 added Delete with a separate confirmation page. The service blocks deletion of copies with loan or reservation-allocation history.
+- The Delete action uses red danger styling. The application retains the desktop inventory table with horizontal scrolling on mobile.
+- The developer manually verified creation, editing, maintenance release, withdrawal, safe deletion, confirmation and cancellation, restricted-status actions, validation errors and responsive behavior.
+- The developer reported the full Maven build passing after completing the deletion workflow and the final button styling correction.
+- The developer pushed the preceding inventory-management checkpoint to GitHub and reported passing CI. The deletion changes and this documentation update remain pending commit.
+- A read-only SQL join between physical copies and loans returned no rows in the local database, so rejection of deletion due to historical loans could not be demonstrated manually with the available data. Historical restrictions are covered by service integration tests; they were not established through that manual browser test.
+- No new Flyway migration was required.
 
 ### Next development work
 
-- Correct and test `POOR` condition handling in the Book Copy service.
-- Complete the service review and commit the Book Copy domain and service implementation.
-- Connect physical-copy inventory management to the Book Title Details page.
-- Implement and test the remaining parent-child CRUD screens.
+- Commit and push the verified physical-copy deletion changes and updated documentation.
+- Confirm GitHub Actions passes for that commit.
+- Review the completed M2 inventory deliverables against the official assignment.
+- Implement the remaining circulation and reservation workflows, with deliberate transaction and locking rules.
 - Prepare ADR-002 and ADR-003 during their respective implementation phases.
 - Continue updating documentation after verified changes.
 

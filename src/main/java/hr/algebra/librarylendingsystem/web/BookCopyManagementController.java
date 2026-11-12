@@ -43,7 +43,6 @@ public class BookCopyManagementController {
             Model model
     ) {
         BookTitleDetails book = findBookTitle(bookTitleId);
-
         ensureActive(book);
 
         model.addAttribute("copyForm", new BookCopyForm());
@@ -61,7 +60,6 @@ public class BookCopyManagementController {
             RedirectAttributes redirectAttributes
     ) {
         BookTitleDetails book = findBookTitle(bookTitleId);
-
         ensureActive(book);
 
         if (bindingResult.hasErrors()) {
@@ -70,16 +68,12 @@ public class BookCopyManagementController {
         }
 
         try {
-            bookCopyService.create(
-                    bookTitleId,
-                    toCommand(form)
-            );
+            bookCopyService.create(bookTitleId, toCommand(form));
         } catch (InvalidBookCopyException exception) {
             bindingResult.reject(
                     "invalid.bookCopy",
                     exception.getMessage()
             );
-
             model.addAttribute("book", book);
             return "catalog/copies/create";
         }
@@ -123,7 +117,6 @@ public class BookCopyManagementController {
             RedirectAttributes redirectAttributes
     ) {
         BookTitleDetails book = findBookTitle(bookTitleId);
-
         findEditableCopy(bookTitleId, copyId);
 
         if (bindingResult.hasErrors()) {
@@ -144,7 +137,6 @@ public class BookCopyManagementController {
                     "invalid.bookCopy",
                     exception.getMessage()
             );
-
             addEditContext(model, book, copyId);
             return "catalog/copies/edit";
         }
@@ -173,17 +165,12 @@ public class BookCopyManagementController {
         } catch (BookCopyNotFoundException exception) {
             throw copyNotFound(exception);
         } catch (BookTitleNotFoundException exception) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Book title not found",
-                    exception
-            );
+            throw titleNotFound(exception);
         } catch (InvalidBookCopyException exception) {
             redirectAttributes.addFlashAttribute(
                     "errorMessage",
                     exception.getMessage()
             );
-
             return "redirect:/catalog/" + bookTitleId;
         }
 
@@ -220,9 +207,6 @@ public class BookCopyManagementController {
             RedirectAttributes redirectAttributes
     ) {
         findBookTitle(bookTitleId);
-
-        // Check the requested copy and its visible circulation status.
-        // The service performs the authoritative locked checks.
         findWithdrawableCopy(bookTitleId, copyId);
 
         try {
@@ -230,17 +214,12 @@ public class BookCopyManagementController {
         } catch (BookCopyNotFoundException exception) {
             throw copyNotFound(exception);
         } catch (BookTitleNotFoundException exception) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Book title not found",
-                    exception
-            );
+            throw titleNotFound(exception);
         } catch (InvalidBookCopyException exception) {
             redirectAttributes.addFlashAttribute(
                     "errorMessage",
                     exception.getMessage()
             );
-
             return "redirect:/catalog/" + bookTitleId;
         }
 
@@ -252,15 +231,61 @@ public class BookCopyManagementController {
         return "redirect:/catalog/" + bookTitleId;
     }
 
+    @GetMapping("/{copyId}/delete")
+    public String showDeleteConfirmation(
+            @PathVariable Long bookTitleId,
+            @PathVariable Long copyId,
+            Model model
+    ) {
+        BookTitleDetails book = findBookTitle(bookTitleId);
+        BookCopyDetails copy = findDeletableStatusCopy(
+                bookTitleId,
+                copyId
+        );
+
+        model.addAttribute("book", book);
+        model.addAttribute("copy", copy);
+
+        return "catalog/copies/delete";
+    }
+
+    @PostMapping("/{copyId}/delete")
+    public String deleteCopy(
+            @PathVariable Long bookTitleId,
+            @PathVariable Long copyId,
+            RedirectAttributes redirectAttributes
+    ) {
+        findBookTitle(bookTitleId);
+        findDeletableStatusCopy(bookTitleId, copyId);
+
+        try {
+            bookCopyService.delete(bookTitleId, copyId);
+        } catch (BookCopyNotFoundException exception) {
+            throw copyNotFound(exception);
+        } catch (BookTitleNotFoundException exception) {
+            throw titleNotFound(exception);
+        } catch (InvalidBookCopyException exception) {
+            redirectAttributes.addFlashAttribute(
+                    "errorMessage",
+                    exception.getMessage()
+            );
+
+            return "redirect:/catalog/" + bookTitleId;
+        }
+
+        redirectAttributes.addFlashAttribute(
+                "successMessage",
+                "Physical copy deleted successfully."
+        );
+
+        return "redirect:/catalog/" + bookTitleId;
+    }
+
     private BookTitleDetails findBookTitle(Long id) {
         try {
             return bookTitleService.findById(id);
         } catch (BookTitleNotFoundException exception) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Book title not found",
-                    exception
-            );
+            throw titleNotFound(exception);
         }
     }
 
@@ -273,11 +298,7 @@ public class BookCopyManagementController {
         } catch (BookCopyNotFoundException exception) {
             throw copyNotFound(exception);
         } catch (BookTitleNotFoundException exception) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Book title not found",
-                    exception
-            );
+            throw titleNotFound(exception);
         }
     }
 
@@ -315,12 +336,40 @@ public class BookCopyManagementController {
         return copy;
     }
 
+    private BookCopyDetails findDeletableStatusCopy(
+            Long bookTitleId,
+            Long copyId
+    ) {
+        BookCopyDetails copy = findCopy(bookTitleId, copyId);
+
+        if (!"AVAILABLE".equals(copy.status())
+                && !"MAINTENANCE".equals(copy.status())
+                && !"WITHDRAWN".equals(copy.status())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "This physical copy cannot be deleted in its current status."
+            );
+        }
+
+        return copy;
+    }
+
     private ResponseStatusException copyNotFound(
             BookCopyNotFoundException exception
     ) {
         return new ResponseStatusException(
                 HttpStatus.NOT_FOUND,
                 "Physical copy not found",
+                exception
+        );
+    }
+
+    private ResponseStatusException titleNotFound(
+            BookTitleNotFoundException exception
+    ) {
+        return new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Book title not found",
                 exception
         );
     }
