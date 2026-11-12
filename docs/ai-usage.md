@@ -1,10 +1,9 @@
-
 # AI Usage Log
 
 **Project:** P03 Library Lending System  
 **Course:** Rapid Development of Java Applications Using Programming Frameworks (2026/27)  
 **Started:** 2026-10-29  
-**Last updated:** 2026-11-09
+**Last updated:** 2026-11-12
 
 ## M1 — Planning and project setup
 
@@ -270,6 +269,44 @@
 - **Files:** `docs/prototype.pdf`, `README.md`, `docs/ai-usage.md`.
 - **Remaining work:** Save and review the updated documentation, verify Figma sharing permissions, commit and push the files, then confirm their presence on GitHub.
 
+## M2 — Book Title management and Book Copy validation
+
+### AI-025 — Implement Book Title details, editing and navigation
+
+- **Date:** 2026-11-11 to 2026-11-12.
+- **Task:** Complete Book Title details and editing workflows, connect the catalog management screens and add automated MVC tests.
+- **AI assistance:** Proposed the Details and Edit controller endpoints, Thymeleaf templates, validation handling, redirects and navigation links. Prepared MVC tests for book details, missing titles, edit-form prepopulation, successful updates and rejected submissions. Helped refine the action-button spacing.
+- **Developer work:** Implemented the changes locally, tested Book Title details and editing through the browser, checked optional metadata and inactive titles, verified responsive layouts and corrected the details-page action buttons. Ran the Maven test suite, reviewed the results and committed the completed implementation.
+- **Changes and decisions:** Reused `BookTitleForm` and `BookTitleCommand` for Create and Edit. Kept business rules in the service layer. Updated Create to redirect to the newly created title's details page. Added catalog navigation, Edit actions and success messages. Preserved existing title status during metadata editing.
+- **Verification:** The developer reported all manual workflow checks passing and 42 automated tests passing after completing the Book Title management implementation. The final commit was inspected on GitHub and contained the controller, templates, CSS and MVC test changes. The reported local test results were not independently executed by the AI.
+- **Files:** `BookTitleManagementController.java`, `BookTitleManagementControllerTests.java`, `templates/catalog/list.html`, `templates/catalog/details.html`, `templates/catalog/edit.html`, `static/css/library.css` and `static/css/book-title-details.css`.
+- **Git commit:** `9990882` (`implement and test book title details and editing`).
+- **Remaining work:** Implement physical-copy management, circulation workflows, authorization and related integration tests.
+
+### AI-026 — Define and validate Book Copy conditions and statuses
+
+- **Date:** 2026-11-12.
+- **Task:** Establish accepted physical-copy conditions and circulation statuses as the first checkpoint of Book Copy management.
+- **AI assistance:** Reviewed the existing `BookCopy` entity, repository, Flyway schema and decision register. Proposed five physical conditions and five circulation statuses, explained their separation and prepared Java enums, entity validation and focused unit tests.
+- **Developer work:** Reviewed and accepted the proposed values, implemented the Java classes and validation changes, ran the focused tests and executed the full Maven verification. Confirmed that all 51 tests passed.
+- **Changes and decisions:** Accepted `NEW`, `GOOD`, `FAIR`, `POOR` and `DAMAGED` as physical conditions. Accepted `AVAILABLE`, `ON_LOAN`, `ON_HOLD`, `MAINTENANCE` and `WITHDRAWN` as circulation statuses. Retained string-based JPA fields and existing database columns to avoid unnecessary changes to working catalog queries and integration tests. Added inventory-code normalization and validation.
+- **Verification:** Nine new unit tests covered supported and unsupported condition/status values, missing values, inventory-code validation, normalization and setter behavior. The developer reported all 51 tests passing with `./mvnw verify`. No database migration or new database constraint was applied.
+- **Files:** `src/main/java/hr/algebra/librarylendingsystem/domain/BookCopy.java`, `src/main/java/hr/algebra/librarylendingsystem/domain/BookCopyCondition.java`, `src/main/java/hr/algebra/librarylendingsystem/domain/BookCopyStatus.java` and `src/test/java/hr/algebra/librarylendingsystem/BookCopyValidationTests.java`.
+- **Remaining work:** Complete circulation-aware status transitions and database allowed-value constraints.
+- **Git status:** Step 19.1A changes are locally verified. Commit and push remain pending.
+
+### AI-027 — Implement Book Copy service and integration tests
+
+- **Date:** 2026-11-12.
+- **Task:** Implement the physical-copy service for creation, retrieval, metadata updates, withdrawal, safe deletion and maintenance release.
+- **AI assistance:** Prepared service interfaces, DTOs, exceptions, repository queries and integration tests. Reviewed the inventory rules and identified an inconsistency in handling copies with `POOR` condition.
+- **Developer work:** Implemented the service classes and tests in IntelliJ, corrected the `DuplicateInventoryCodeException` filename and ran Maven verification after each development step.
+- **Changes and decisions:** Kept inventory updates separate from loan and reservation operations. Added validation for inventory codes, restrictions on protected circulation statuses, historical-reference checks and pessimistic locking for administrative operations. Maintenance release requires an eligible condition and checks for active loans, allocated reservations and waiting reservations.
+- **Verification:** Seven creation/retrieval tests, eight update tests, ten lifecycle tests and nine maintenance tests were added. The developer reported successful builds and 85 passing tests after Step 19.1E. The `POOR` condition correction was identified during review and has not yet been verified.
+- **Files:** `BookCopyService.java`, `BookCopyServiceImpl.java`, `BookCopyCommand.java`, `BookCopyDetails.java`, `BookCopyRepository.java`, `BookCopyNotFoundException.java`, `InvalidBookCopyException.java`, `DuplicateInventoryCodeException.java`, `BookCopyServiceIntegrationTests.java`, `BookCopyUpdateIntegrationTests.java`, `BookCopyLifecycleIntegrationTests.java` and `BookCopyMaintenanceIntegrationTests.java`.
+- **Remaining work:** Verify the `POOR` condition correction, complete the service review and implement the physical-copy management screens.
+- **Git status:** Local implementation verified; commit pending.
+
 ## Verification summary
 
 ### M1 — 2026-10-29 to 2026-10-30
@@ -307,14 +344,49 @@
 | Prototype PDF | Eight pages confirmed by the developer; final two mobile pages visually inspected. |
 | Documentation | README and AI usage log prepared for local review and commit. |
 
+### M2 — 2026-11-11 to 2026-11-12
+
+| Area | Verified result |
+|---|---|
+| Book Title management | Create, Details and Edit workflows manually tested by the developer. |
+| Catalog navigation | Desktop and mobile title links, Add Book Title action and Edit navigation verified manually. |
+| Form validation | Required fields, primary-category selection and invalid updates tested. |
+| Missing titles | HTTP 404 behavior tested for Details and Edit requests. |
+| Optional metadata | Missing ISBN, publisher, publication year and description displayed correctly. |
+| Responsive layout | Catalog and management screens reviewed at desktop, tablet and mobile widths. |
+| Book Title MVC tests | Existing tests extended to cover details and editing. |
+| Book Title test suite | 42 tests reported passing after completing Step 18. |
+| Book Title Git commit | Commit `9990882` confirmed on GitHub with seven changed files. |
+| Book Copy values | Five conditions and five statuses accepted and implemented in Java. |
+| Book Copy validation | Nine focused unit tests reported passing. |
+| Full Maven verification | 51 tests reported passing after Step 19.1A. |
+| Database changes | No new migration introduced for Step 19.1A. |
+| Book Copy Git status | Local implementation verified; commit pending. |
+
+### M2 — Physical-copy service verification, 2026-11-12
+
+| Area | Verified result |
+|---|---|
+| Copy creation and retrieval | Seven PostgreSQL integration tests reported passing. |
+| Copy metadata updates | Eight PostgreSQL integration tests reported passing. |
+| Withdrawal and safe deletion | Ten lifecycle integration tests reported passing. |
+| Maintenance release | Nine integration tests reported passing. |
+| Historical integrity | Tests covered references from loans and reservations. |
+| Pessimistic locking | Implemented for administrative copy modifications; concurrent circulation integration remains untested. |
+| Build after Step 19.1B | 58 tests reported passing. |
+| Build after Step 19.1C | 66 tests reported passing. |
+| Build after Step 19.1D | 76 tests reported passing. |
+| Build after Step 19.1E | 85 tests reported passing. |
+| Final review | `POOR` condition handling identified for correction and additional regression tests. |
+| Database migrations | No new Flyway migrations introduced. |
+| Git | Book Copy service commit and push pending. |
+
 ## Remaining work
 
-The database migrations, permanent reference data, initial catalog JPA mappings, repositories, integration tests and GitHub Actions CI workflow are in place.
+The database migrations, permanent reference data, catalog JPA mappings, repositories, Book Title management screens, Book Copy service operations, integration tests and GitHub Actions CI workflow are in place.
 
-The remaining application tables still require Java mappings and repositories. Catalog services, DTOs, validation, CRUD screens and development-only fixtures have not yet been implemented.
+The remaining application tables still require Java mappings and repositories. Physical-copy management screens, circulation workflows, security, REST API, Gemini integration, scheduling, internationalization and deployment remain pending.
 
-Security, REST API, Gemini integration, scheduling, internationalization, deployment, performance measurements, additional test categories and service coverage remain pending. No coverage percentages, AI evaluation scores or production deployment results have been claimed.
+Additional test categories, concurrency verification, service coverage and performance measurements are also required. No coverage percentages, AI evaluation scores or production deployment results have been claimed.
 
-The M2 Figma design work has been prepared, including reusable components, desktop and mobile screens, a clickable prototype, contrast measurements, design rationale and PDF export.
-
-Final Figma documentation checks, repository synchronization and public sharing verification remain pending. The implemented application's accessibility and functional behavior must be tested separately from the Figma prototype.
+The M2 Figma work includes reusable components, desktop and mobile screens, a clickable prototype, contrast measurements, design rationale and PDF export. The implemented application's accessibility and functional behavior must be tested separately from the prototype.

@@ -1,9 +1,8 @@
-
 # Project Decision Register
 
 **Project:** P03 Library Lending System  
 **Course:** Rapid Development of Java Applications Using Programming Frameworks (2026/27)  
-**Last updated:** 2026-11-05
+**Last updated:** 2026-11-12
 
 The professor's official assignment takes precedence over project decisions. An accepted decision does not necessarily mean that the corresponding feature has been implemented.
 
@@ -38,24 +37,25 @@ The professor's official assignment takes precedence over project decisions. An 
 | D-015 | Automatically allocate an available copy to the first eligible waiting reservation. | Transactional service implementation planned. |
 | D-016 | Allocated reservations have a **three-day pickup deadline**. Expired holds release the copy and promote the next eligible member. | Deadline and expiration logic pending. |
 | D-017 | If an allocated copy becomes damaged or unavailable before pickup, the reservation retains its original queue priority while allocation is reconsidered. | Service implementation planned. |
-| D-018 | Keep `BookCopy.CopyCondition` separate from `BookCopy.Status`. Status represents circulation availability; condition represents physical quality. | Separate columns implemented in V1. Final enum values and lending policy pending. |
+| D-018 | Keep `BookCopy.CopyCondition` separate from `BookCopy.Status`. Condition represents physical quality with the accepted values `NEW`, `GOOD`, `FAIR`, `POOR` and `DAMAGED`. Status represents circulation state with the accepted values `AVAILABLE`, `ON_LOAN`, `ON_HOLD`, `MAINTENANCE` and `WITHDRAWN`. | Separate columns implemented in V1. Java enums and entity-level validation implemented in M2 Step 19.1A. String-based JPA mappings retained. Database value constraints and full circulation transitions pending. |
 | D-019 | Store `BookTitle.Authors` as text and allow ISBN to be optional. | Implemented in V1. |
 | D-020 | Link fulfilled reservations to loans using nullable, unique `Loans.ReservationId`. | Foreign key and unique constraint implemented in V1. Fulfillment logic pending. |
+| D-054 | Separate physical-copy administration from circulation. Allow metadata changes only for available or maintenance copies. Preserve loan and reservation history during withdrawal or deletion. Maintenance release requires an active title, acceptable physical condition and no conflicting loan, hold or waiting reservation. | Service operations and integration tests implemented in M2 Steps 19.1B–19.1E. The agreed policy treats `POOR` and `DAMAGED` copies as requiring maintenance; the `POOR` creation/update correction remains to be verified. |
 
 ## 4. Persistence and integrity
 
 | ID | Accepted decision | Implementation status / notes |
 |---|---|---|
-| D-021 | Use PostgreSQL with Spring Data JPA, Hibernate 7, Flyway and HikariCP. | PostgreSQL 17.11 and Flyway V1–V3 verified. JPA entity mappings and repositories pending. See ADR-001. |
+| D-021 | Use PostgreSQL with Spring Data JPA, Hibernate 7, Flyway and HikariCP. | PostgreSQL 17.11 and Flyway V1–V3 verified. Catalog JPA entities, repositories and services implemented. Remaining domain mappings pending. See ADR-001. |
 | D-022 | Use 12 application tables: `BookTitles`, `BookCopies`, `Categories`, `BookCategories`, `AppUsers`, `Roles`, `UserRoles`, `Loans`, `FineAccruals`, `Reservations`, `PurchaseSuggestions` and `AiSuggestionResults`. | All 12 tables created by V1 and verified in PostgreSQL. |
-| D-023 | Use singular PascalCase Java entities, plural PascalCase logical SQL table names and PascalCase logical column names. PostgreSQL lowercase folding is accepted; JPA mappings must match. | SQL naming verified through PostgreSQL inspection. Java mappings pending. |
-| D-024 | Model `BookCategories` as an attributed association entity with `IsPrimary`. Allow at most one primary category per title. | Composite primary key and partial unique index implemented in V1. |
-| D-025 | Preserve loans, fine accruals and important reservation history. Allow physical deletion where safe; use withdrawal or deactivation when history must be retained. | Restrictive foreign keys implemented in V1; historical allocation references supported by V2. Service deletion rules pending. |
-| D-026 | Use service-level transactions, database constraints and suitable locking for checkout, renewal, return and reservation allocation. | Selected constraints implemented in V1–V2. Six negative SQL tests reported passing. Transactions and concurrency tests pending. |
-| D-027 | Prefer lazy JPA fetching and use fetch joins or entity graphs when needed. Document an N+1 problem and its before/after SQL. | Planned for JPA implementation. |
-| D-028 | Separate controllers, services and repositories. Use constructor injection, DTOs/forms, validation and appropriate exception handling. | Architecture policy; implementation pending. |
+| D-023 | Use singular PascalCase Java entities, plural PascalCase logical SQL table names and PascalCase logical column names. PostgreSQL lowercase folding is accepted; JPA mappings must match. | SQL naming and catalog JPA mappings verified. Remaining mappings pending. |
+| D-024 | Model `BookCategories` as an attributed association entity with `IsPrimary`. Allow at most one primary category per title. | Composite primary key and partial unique index implemented in V1. JPA mapping and repository tests implemented. |
+| D-025 | Preserve loans, fine accruals and important reservation history. Allow physical deletion where safe; use withdrawal or deactivation when history must be retained. | Restrictive foreign keys implemented in V1–V2. Book Copy deletion and withdrawal checks implemented and tested. Other historical deletion rules remain pending. |
+| D-026 | Use service-level transactions, database constraints and suitable locking for checkout, renewal, return and reservation allocation. | Selected constraints implemented in V1–V2. Book Copy administrative operations use pessimistic row locking. Circulation transactions and concurrency tests pending. |
+| D-027 | Prefer lazy JPA fetching and use fetch joins or entity graphs when needed. Document an N+1 problem and its before/after SQL. | Lazy catalog mappings implemented. N+1 measurement and optimization evidence pending. |
+| D-028 | Separate controllers, services and repositories. Use constructor injection, DTOs/forms, validation and appropriate exception handling. | Applied to Book Title management and Book Copy service operations. Remaining application features pending. |
 | D-052 | Keep applied Flyway versioned migrations unchanged. Use new migrations for later schema modifications. | Applied during V1–V3 development. |
-| D-053 | Separate permanent reference data from development-only demonstration data. Do not include default user credentials or date-dependent demonstration records in production migrations. | V3 contains three roles and ten categories. Development fixtures pending. |
+| D-053 | Separate permanent reference data from development-only demonstration data. Do not include default user credentials or date-dependent demonstration records in production migrations. | V3 contains three roles and ten categories. Separate development-only catalog fixtures implemented. |
 
 ## 5. AI purchase suggestions and scheduling
 
@@ -100,8 +100,8 @@ ADR-002 will document the provider interface, structured output, error handling 
 |---|---|---|
 | D-032 | Use Java 25, Spring Boot 4.1, Maven Wrapper and IntelliJ IDEA. | Java 25.0.5, Spring Boot 4.1.2, Maven Wrapper 3.10.0 and IntelliJ IDEA 2026.2.3 verified. |
 | D-033 | Run PostgreSQL 17 through Docker Compose locally, bound to `127.0.0.1:5433`, with a persistent named volume. | PostgreSQL 17.11 and V1–V3 migrations verified. |
-| D-034 | Use ignored `.env` files and local IntelliJ environment settings for credentials. Commit only placeholders in `.env.example`. |
-| D-035 | Use `LeoBrcina/library-lending-system` and small descriptive commits without conventional prefixes. | Repository active; V1–V3 migration files committed to `main`. |
+| D-034 | Use ignored `.env` files and local IntelliJ environment settings for credentials. Commit only placeholders in `.env.example`. | Applied locally. |
+| D-035 | Use `LeoBrcina/library-lending-system` and small descriptive commits without conventional prefixes. | Repository active; catalog implementation committed to `main`. Book Copy service changes pending commit. |
 | D-036 | Maintain three ADRs, `docs/ai-usage.md`, `docs/ai-evaluation.md` and Figma documentation. | ADR-001 and initial documentation present; ADR-002, ADR-003 and evaluation document pending. |
 | D-037 | Use the professor's assignment and uploaded lectures/demos as primary references. Only the two authorized professor GitHub repositories may be used as external code references. | Ongoing policy. |
 | D-038 | Implement one major phase at a time, inspect current files before changing them and verify work before committing. | Ongoing workflow policy. |
@@ -129,12 +129,12 @@ A short interval can demonstrate repeated scheduling during the defense, but it 
 | REST API with DTOs, pagination, sorting, status codes and ProblemDetail | Planned for LO5. |
 | AI feature through screen and endpoint | Google Gemini selected; implementation pending. |
 | AI provider abstraction and deterministic stub tests | Planned. |
-| JUnit 6, Mockito, MVC/repository/Testcontainers tests and JaCoCo coverage | Planned; no automated Java test results verified. |
+| JUnit 6, Mockito, MVC/repository/Testcontainers tests and JaCoCo coverage | JUnit, MVC, repository and service integration tests implemented. Testcontainers and JaCoCo coverage work pending. |
 | Croatian/English internationalization, validation, date and number formatting | Planned for LO7. |
 | Two scheduled jobs and persistent coordination | Planned for LO7. |
-| Figma prototypes and reusable components | M1 low-fidelity wireframes completed; M2 high-fidelity work pending. |
+| Figma prototypes and reusable components | M1 wireframes and M2 high-fidelity prototype prepared. |
 | AI evaluation with at least ten real cases | Pending. |
-| Managed database, HTTPS deployment, CI, performance measurements and recording | Pending. |
+| Managed database, HTTPS deployment, CI, performance measurements and recording | CI implemented; deployment and performance evidence pending. |
 
 ## 8. Implementation checkpoints
 
@@ -159,7 +159,7 @@ A short interval can demonstrate repeated scheduling during the defense, but it 
 - V3 added three user roles and ten library categories, verified through SQL queries.
 - All three Flyway migration files were committed to GitHub.
 - The original manually prepared M1 ER diagram was retained unchanged.
-- JPA entities, repositories, services, CRUD screens and development fixtures remain to be implemented.
+- JPA entities, repositories, services, CRUD screens and development fixtures had not yet been implemented at this checkpoint.
 
 ### Accepted but not implemented
 
@@ -168,15 +168,47 @@ A short interval can demonstrate repeated scheduling during the defense, but it 
 - Security and permission matrix.
 - Transactional circulation and reservation workflows.
 - Persistent scheduled jobs and catch-up processing.
-- Automated Java tests and coverage.
-- High-fidelity Figma prototype and interactive flow.
+
+### M2 catalog management and physical-copy validation — 2026-11-12
+
+- Catalog persistence, service operations and Thymeleaf management screens were implemented incrementally after the M2 database foundation.
+- Book Title creation, details, editing, validation, category selection and catalog navigation were implemented and manually verified.
+- MVC tests were added for successful submissions, invalid input, book details, edit-form prepopulation and missing book titles.
+- The developer reported 42 automated tests passing after completing the Book Title management workflow.
+- The Book Title details and editing implementation was committed and pushed as `9990882` (`implement and test book title details and editing`). The commit was inspected on GitHub.
+- M2 Step 19.1A introduced `BookCopyCondition` and `BookCopyStatus` with five accepted values each.
+- `BookCopy` validates inventory codes, physical conditions and circulation statuses through its constructor and setters.
+- Inventory codes are trimmed and checked for required content and maximum length. Invalid condition and status values are rejected.
+- The existing string-based JPA fields and PostgreSQL columns were retained for compatibility with the working catalog implementation.
+- Nine focused `BookCopyValidationTests` tests were added.
+- The developer reported all 51 tests passing with `./mvnw verify`, including the nine new validation tests.
+- No Flyway migration was introduced in Step 19.1A. Reservation statuses remain constrained by the existing V2 migration.
+- Java validation does not protect direct SQL writes or enforce full circulation state transitions.
+
+### M2 physical-copy service operations — 2026-11-12
+
+- Steps 19.1B–19.1E introduced the `BookCopyService`, DTOs, business exceptions and PostgreSQL integration tests.
+- Creation requires an active parent title, valid physical condition and globally unique inventory code.
+- Copies are retrieved by parent Book Title and returned as DTOs.
+- Metadata updates allow changes to the inventory code, condition and acquisition date while preserving the parent relationship.
+- Editing is restricted to `AVAILABLE` and `MAINTENANCE` copies. Other circulation states cannot be changed through ordinary inventory editing.
+- Withdrawal retains the physical-copy record and prevents further circulation. Active loans and allocated reservations block withdrawal.
+- Physical deletion is allowed only when no loan or reservation history references the copy. PostgreSQL foreign keys provide additional protection.
+- Administrative update, withdrawal, deletion and maintenance release use pessimistic locking on the physical-copy record.
+- A repaired copy may be released from maintenance only if its title is active, its condition is `NEW`, `GOOD` or `FAIR`, and there is no active loan, allocated reservation or waiting reservation for the title.
+- Seven create/list integration tests, eight update tests, ten lifecycle tests and nine maintenance-release tests were added.
+- The developer reported 58 passing tests after Step 19.1B, 66 after 19.1C, 76 after 19.1D and 85 after 19.1E.
+- Review identified inconsistent handling of the `POOR` condition in creation and update. The correction is pending implementation and regression testing.
+- No new Flyway migrations were introduced.
+- Database value constraints, complete circulation locking, concurrent duplicate-code handling and physical-copy management screens remain pending.
+- The service changes have been verified locally but have not yet been committed.
 
 ### Next development work
 
-- Finalize the Java entity mappings and relevant enums.
-- Implement and test the catalog persistence layer.
-- Prepare development-only catalog fixtures.
-- Implement parent-child CRUD through services and Thymeleaf screens.
+- Correct and test `POOR` condition handling in the Book Copy service.
+- Complete the service review and commit the Book Copy domain and service implementation.
+- Connect physical-copy inventory management to the Book Title Details page.
+- Implement and test the remaining parent-child CRUD screens.
 - Prepare ADR-002 and ADR-003 during their respective implementation phases.
 - Continue updating documentation after verified changes.
 

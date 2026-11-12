@@ -46,9 +46,9 @@ public class BookCopy {
             String copyCondition,
             String status
     ) {
-        this.inventoryCode = inventoryCode;
-        this.copyCondition = copyCondition;
-        this.status = status;
+        setInventoryCode(inventoryCode);
+        setCopyCondition(copyCondition);
+        setStatus(status);
     }
 
     public Long getId() {
@@ -68,7 +68,22 @@ public class BookCopy {
     }
 
     public void setInventoryCode(String inventoryCode) {
-        this.inventoryCode = inventoryCode;
+        if (inventoryCode == null
+                || inventoryCode.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Inventory code is required."
+            );
+        }
+
+        String normalizedCode = inventoryCode.trim();
+
+        if (normalizedCode.length() > 100) {
+            throw new IllegalArgumentException(
+                    "Inventory code must not exceed 100 characters."
+            );
+        }
+
+        this.inventoryCode = normalizedCode;
     }
 
     public String getCopyCondition() {
@@ -76,7 +91,8 @@ public class BookCopy {
     }
 
     public void setCopyCondition(String copyCondition) {
-        this.copyCondition = copyCondition;
+        this.copyCondition =
+                BookCopyCondition.fromValue(copyCondition).name();
     }
 
     public String getStatus() {
@@ -84,7 +100,7 @@ public class BookCopy {
     }
 
     public void setStatus(String status) {
-        this.status = status;
+        this.status = BookCopyStatus.fromValue(status).name();
     }
 
     public LocalDate getAcquiredAt() {
