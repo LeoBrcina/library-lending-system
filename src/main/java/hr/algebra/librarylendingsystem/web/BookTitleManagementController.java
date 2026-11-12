@@ -1,7 +1,9 @@
 package hr.algebra.librarylendingsystem.web;
 
+import hr.algebra.librarylendingsystem.service.BookCopyService;
 import hr.algebra.librarylendingsystem.service.BookTitleService;
 import hr.algebra.librarylendingsystem.service.CategoryQueryService;
+import hr.algebra.librarylendingsystem.service.dto.BookCopyDetails;
 import hr.algebra.librarylendingsystem.service.dto.BookTitleCommand;
 import hr.algebra.librarylendingsystem.service.dto.BookTitleDetails;
 import hr.algebra.librarylendingsystem.service.dto.CategoryOption;
@@ -28,13 +30,16 @@ import java.util.List;
 public class BookTitleManagementController {
 
     private final BookTitleService bookTitleService;
+    private final BookCopyService bookCopyService;
     private final CategoryQueryService categoryQueryService;
 
     public BookTitleManagementController(
             BookTitleService bookTitleService,
+            BookCopyService bookCopyService,
             CategoryQueryService categoryQueryService
     ) {
         this.bookTitleService = bookTitleService;
+        this.bookCopyService = bookCopyService;
         this.categoryQueryService = categoryQueryService;
     }
 
@@ -97,8 +102,17 @@ public class BookTitleManagementController {
                         )
                         .toList();
 
+        List<BookCopyDetails> copies =
+                bookCopyService.findByBookTitleId(id);
+
+        long availableCopyCount = copies.stream()
+                .filter(copy -> "AVAILABLE".equals(copy.status()))
+                .count();
+
         model.addAttribute("book", book);
         model.addAttribute("selectedCategories", selectedCategories);
+        model.addAttribute("copies", copies);
+        model.addAttribute("availableCopyCount", availableCopyCount);
 
         return "catalog/details";
     }

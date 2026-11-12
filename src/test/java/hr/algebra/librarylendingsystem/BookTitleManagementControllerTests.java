@@ -1,7 +1,9 @@
 package hr.algebra.librarylendingsystem;
 
+import hr.algebra.librarylendingsystem.service.BookCopyService;
 import hr.algebra.librarylendingsystem.service.BookTitleService;
 import hr.algebra.librarylendingsystem.service.CategoryQueryService;
+import hr.algebra.librarylendingsystem.service.dto.BookCopyDetails;
 import hr.algebra.librarylendingsystem.service.dto.BookTitleCommand;
 import hr.algebra.librarylendingsystem.service.dto.BookTitleDetails;
 import hr.algebra.librarylendingsystem.service.dto.CategoryOption;
@@ -15,13 +17,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
+import java.time.ZoneId;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -43,6 +45,9 @@ class BookTitleManagementControllerTests {
 
     @MockitoBean
     private BookTitleService bookTitleService;
+
+    @MockitoBean
+    private BookCopyService bookCopyService;
 
     @MockitoBean
     private CategoryQueryService categoryQueryService;
@@ -229,12 +234,17 @@ class BookTitleManagementControllerTests {
         when(categoryQueryService.findAll())
                 .thenReturn(sampleCategories());
 
+        when(bookCopyService.findByBookTitleId(10L))
+                .thenReturn(List.of());
+
         mockMvc.perform(get("/catalog/10"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("catalog/details"))
                 .andExpect(model().attributeExists(
                         "book",
-                        "selectedCategories"
+                        "selectedCategories",
+                        "copies",
+                        "availableCopyCount"
                 ))
                 .andExpect(content().string(
                         containsString("Clean Code")
@@ -249,10 +259,134 @@ class BookTitleManagementControllerTests {
                         containsString("History")
                 ))
                 .andExpect(content().string(
+                        containsString("Physical Copies")
+                ))
+                .andExpect(content().string(
                         containsString("/catalog/10/edit")
                 ));
 
         verify(bookTitleService).findById(10L);
+        verify(bookCopyService).findByBookTitleId(10L);
+    }
+
+    @Test
+    void shouldRenderPhysicalCopiesAndAvailabilityCount()
+            throws Exception {
+
+        when(bookTitleService.findById(10L))
+                .thenReturn(sampleBookTitleDetails());
+
+        when(categoryQueryService.findAll())
+                .thenReturn(sampleCategories());
+
+        when(bookCopyService.findByBookTitleId(10L))
+                .thenReturn(sampleCopies());
+
+        mockMvc.perform(get("/catalog/10"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("catalog/details"))
+                .andExpect(model().attribute("availableCopyCount", 1L))
+                .andExpect(content().string(
+                        containsString("3 total")
+                ))
+                .andExpect(content().string(
+                        containsString("1 available for borrowing")
+                ))
+                .andExpect(content().string(
+                        containsString("LIB-001")
+                ))
+                .andExpect(content().string(
+                        containsString("LIB-002")
+                ))
+                .andExpect(content().string(
+                        containsString("LIB-003")
+                ))
+                .andExpect(content().string(
+                        containsString("AVAILABLE")
+                ))
+                .andExpect(content().string(
+                        containsString("ON LOAN")
+                ))
+                .andExpect(content().string(
+                        containsString("MAINTENANCE")
+                ))
+                .andExpect(content().string(
+                        containsString("12.11.2026")
+                ))
+                .andExpect(content().string(
+                        containsString("Not recorded")
+                ));
+
+        verify(bookCopyService).findByBookTitleId(10L);
+    }
+
+    @Test
+    void shouldDisplayEmptyInventoryState()
+            throws Exception {
+
+        when(bookTitleService.findById(10L))
+                .thenReturn(sampleBookTitleDetails());
+
+        when(categoryQueryService.findAll())
+                .thenReturn(sampleCategories());
+
+        when(bookCopyService.findByBookTitleId(10L))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/catalog/10"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("availableCopyCount", 0L))
+                .andExpect(content().string(
+                        containsString("0 total")
+                ))
+                .andExpect(content().string(
+                        containsString("0 available for borrowing")
+                ))
+                .andExpect(content().string(
+                        containsString("No physical copies registered")
+                ));
+    }
+
+    @Test
+    void shouldRenderAllUnavailableCopiesWithoutCountingThem()
+            throws Exception {
+
+        when(bookTitleService.findById(10L))
+                .thenReturn(sampleBookTitleDetails());
+
+        when(categoryQueryService.findAll())
+                .thenReturn(sampleCategories());
+
+        when(bookCopyService.findByBookTitleId(10L))
+                .thenReturn(List.of(
+                        new BookCopyDetails(
+                                21L, 10L, "HOLD-001",
+                                "GOOD", "ON_HOLD", null
+                        ),
+                        new BookCopyDetails(
+                                22L, 10L, "OUT-001",
+                                "FAIR", "WITHDRAWN", null
+                        )
+                ));
+
+        mockMvc.perform(get("/catalog/10"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("availableCopyCount", 0L))
+                .andExpect(content().string(
+                        containsString("2 total")
+                ))
+                .andExpect(content().string(
+                        containsString("HOLD-001")
+                ))
+                .andExpect(content().string(
+                        containsString("OUT-001")
+                ))
+                .andExpect(content().string(
+                        containsString("ON HOLD")
+                ))
+                .andExpect(content().string(
+                        containsString("WITHDRAWN")
+                ));
     }
 
     @Test
@@ -264,6 +398,9 @@ class BookTitleManagementControllerTests {
 
         mockMvc.perform(get("/catalog/999"))
                 .andExpect(status().isNotFound());
+
+        verify(bookCopyService, never())
+                .findByBookTitleId(999L);
     }
 
     // Edit Book Title
@@ -417,7 +554,9 @@ class BookTitleManagementControllerTests {
             throws Exception {
 
         when(categoryQueryService.findAll())
-                .thenReturn(sampleCategories());
+                .thenReturn(
+                        sampleCategories()
+                );
 
         mockMvc.perform(
                         post("/catalog/10/edit")
@@ -519,6 +658,35 @@ class BookTitleManagementControllerTests {
                 true,
                 List.of(1L, 2L),
                 1L
+        );
+    }
+
+    private List<BookCopyDetails> sampleCopies() {
+        return List.of(
+                new BookCopyDetails(
+                        11L,
+                        10L,
+                        "LIB-001",
+                        "GOOD",
+                        "AVAILABLE",
+                        LocalDate.of(2026, 11, 12)
+                ),
+                new BookCopyDetails(
+                        12L,
+                        10L,
+                        "LIB-002",
+                        "FAIR",
+                        "ON_LOAN",
+                        null
+                ),
+                new BookCopyDetails(
+                        13L,
+                        10L,
+                        "LIB-003",
+                        "POOR",
+                        "MAINTENANCE",
+                        null
+                )
         );
     }
 }

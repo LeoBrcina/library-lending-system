@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Physical Copy | P03 Library</title>
+    <link rel="stylesheet" th:href="@{/css/library.css(v=4)}">
+    <link rel="stylesheet" th:href="@{/css/book-title-form.css(v=2)}">
+</head>
+<body>
+<div class="app-shell">
+
+    <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+
+    <div class="app-workspace">
+        <header th:replace="~{fragments/workspace-header :: workspaceHeader}">
+        </header>
+
+        <main class="page-content page-content--book-form">
+
+            <nav class="form-breadcrumb" aria-label="Breadcrumb">
+                <a th:href="@{/catalog}">Book Catalog</a>
+                <span aria-hidden="true">/</span>
+
+                <a th:href="@{/catalog/{id}(id=${book.id})}"
+                   th:text="${book.title}">
+                    Book Title
+                </a>
+
+                <span aria-hidden="true">/</span>
+                <span aria-current="page">Edit Physical Copy</span>
+            </nav>
+
+            <div class="page-heading">
+                <h1>Edit Physical Copy</h1>
+                <p class="page-heading__subtitle">
+                    Update inventory information for
+                    <strong th:text="${book.title}">Book Title</strong>.
+                </p>
+            </div>
+
+            <form class="book-title-form"
+                  th:action="@{/catalog/{bookId}/copies/{copyId}/edit(bookId=${book.id},copyId=${copyId})}"
+                  th:object="${copyForm}"
+                  method="post">
+
+                <div class="form-error-summary"
+                     role="alert"
+                     th:if="${#fields.hasAnyErrors()}">
+
+                    <p class="form-error-summary__heading">
+                        Please correct the highlighted fields below.
+                    </p>
+
+                    <ul class="form-error-summary__list"
+                        th:if="${#fields.hasGlobalErrors()}">
+                        <li th:each="error : ${#fields.globalErrors()}"
+                            th:text="${error}">
+                            Validation error
+                        </li>
+                    </ul>
+                </div>
+
+                <section class="form-panel"
+                         aria-labelledby="copy-information-heading">
+
+                    <div class="form-panel__heading">
+                        <h2 id="copy-information-heading">
+                            Physical Copy Information
+                        </h2>
+                        <p>
+                            Change the inventory information for
+                            this physical copy.
+                        </p>
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-field form-field--full">
+                            <label for="inventoryCode">
+                                Inventory code
+                                <span class="required">*</span>
+                            </label>
+
+                            <input id="inventoryCode"
+                                   type="text"
+                                   th:field="*{inventoryCode}"
+                                   th:errorclass="form-field--invalid"
+                                   maxlength="100"
+                                   required
+                                   aria-describedby="inventory-code-help inventory-code-error">
+
+                            <p id="inventory-code-help"
+                               class="form-help">
+                                This code must be unique across the library.
+                            </p>
+
+                            <p id="inventory-code-error"
+                               class="field-error"
+                               th:if="${#fields.hasErrors('inventoryCode')}"
+                               th:errors="*{inventoryCode}">
+                                Invalid inventory code.
+                            </p>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="copyCondition">
+                                Physical condition
+                                <span class="required">*</span>
+                            </label>
+
+                            <select id="copyCondition"
+                                    th:field="*{copyCondition}"
+                                    th:errorclass="form-field--invalid"
+                                    required
+                                    aria-describedby="condition-help condition-error">
+
+                                <option value="">
+                                    Select condition
+                                </option>
+
+                                <option value="NEW">New</option>
+                                <option value="GOOD">Good</option>
+                                <option value="FAIR">Fair</option>
+                                <option value="POOR">Poor</option>
+                                <option value="DAMAGED">Damaged</option>
+                            </select>
+
+                            <p id="condition-help"
+                               class="form-help">
+                                Poor and damaged copies are placed in maintenance.
+                                Repaired copies must be released separately.
+                            </p>
+
+                            <p id="condition-error"
+                               class="field-error"
+                               th:if="${#fields.hasErrors('copyCondition')}"
+                               th:errors="*{copyCondition}">
+                                Invalid physical condition.
+                            </p>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="acquiredAt">
+                                Acquisition date
+                            </label>
+
+                            <input id="acquiredAt"
+                                   type="date"
+                                   th:field="*{acquiredAt}"
+                                   th:errorclass="form-field--invalid"
+                                   aria-describedby="acquired-date-help acquired-date-error">
+
+                            <p id="acquired-date-help"
+                               class="form-help">
+                                Optional. Future acquisition dates are not allowed.
+                            </p>
+
+                            <p id="acquired-date-error"
+                               class="field-error"
+                               th:if="${#fields.hasErrors('acquiredAt')}"
+                               th:errors="*{acquiredAt}">
+                                Invalid acquisition date.
+                            </p>
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <div class="form-actions">
+                    <a class="button button--secondary"
+                       th:href="@{/catalog/{id}(id=${book.id})}">
+                        Cancel
+                    </a>
+
+                    <button class="button button--primary"
+                            type="submit">
+                        Save Changes
+                    </button>
+                </div>
+
+            </form>
+
+        </main>
+    </div>
+</div>
+</body>
+</html>

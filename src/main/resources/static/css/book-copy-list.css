@@ -1,0 +1,207 @@
+/* Physical-copy inventory on the Book Title Details page. */
+
+.book-copy-panel__heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.book-copy-panel__heading > div {
+    min-width: 0;
+}
+
+.book-copy-panel__heading-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.book-copy-panel__count {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 7px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    color: var(--color-primary);
+    background: #f5f7f3;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.book-copy-panel__summary {
+    margin: 0 0 20px;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+}
+
+.book-copy-panel__empty {
+    padding: 36px 24px;
+    border: 1px dashed var(--color-border);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.book-copy-panel__empty h3 {
+    margin: 0 0 8px;
+    color: var(--color-primary);
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.book-copy-panel__empty p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.book-copy-panel__table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+}
+
+.book-copy-table {
+    width: 100%;
+    min-width: 620px;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.book-copy-table th {
+    padding: 14px 16px;
+    background: #f7f8f5;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.book-copy-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+.book-copy-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.book-copy-table__code {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.book-copy-condition,
+.book-copy-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.book-copy-condition {
+    background: #f0f1ef;
+    color: #485348;
+}
+
+.book-copy-status {
+    background: #edf0f1;
+    color: #42515a;
+}
+
+.book-copy-status--available {
+    background: #e7f3e9;
+    color: #27633b;
+}
+
+.book-copy-status--on_loan {
+    background: #e8eff8;
+    color: #315b8c;
+}
+
+.book-copy-status--on_hold {
+    background: #fff1db;
+    color: #805414;
+}
+
+.book-copy-status--maintenance {
+    background: #fff0e7;
+    color: #974a1c;
+}
+
+.book-copy-status--withdrawn {
+    background: #eeeeee;
+    color: #666666;
+}
+
+@media (max-width: 767px) {
+    .book-copy-panel__heading {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .book-copy-panel__heading-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .book-copy-panel__heading-actions .button {
+        width: 100%;
+    }
+
+    .book-copy-panel__count {
+        align-self: flex-start;
+    }
+
+    .book-copy-panel__empty {
+        padding: 28px 16px;
+    }
+}
+
+/* Physical-copy edit actions. */
+
+.book-copy-table td .button {
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.book-copy-table__unavailable-action {
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+/* Physical-copy administrative actions. */
+
+.book-copy-table__actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.book-copy-table__actions form {
+    display: inline-flex;
+    margin: 0;
+}
+
+.book-copy-table__actions .button {
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 13px;
+}
+

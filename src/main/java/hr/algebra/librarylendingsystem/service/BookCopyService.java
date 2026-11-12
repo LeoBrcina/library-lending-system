@@ -14,6 +14,11 @@ public interface BookCopyService {
 
     List<BookCopyDetails> findByBookTitleId(Long bookTitleId);
 
+    BookCopyDetails findById(
+            Long bookTitleId,
+            Long copyId
+    );
+
     BookCopyDetails update(
             Long bookTitleId,
             Long copyId,

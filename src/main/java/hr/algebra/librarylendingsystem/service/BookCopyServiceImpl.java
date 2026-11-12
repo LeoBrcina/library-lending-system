@@ -15,6 +15,8 @@ import hr.algebra.librarylendingsystem.service.exception.InvalidBookCopyExceptio
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
 
@@ -92,6 +94,30 @@ public class BookCopyServiceImpl implements BookCopyService {
                         ).thenComparing(BookCopyDetails::id)
                 )
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BookCopyDetails findById(
+            Long bookTitleId,
+            Long copyId
+    ) {
+        findTitle(bookTitleId);
+
+        if (copyId == null || copyId <= 0) {
+            throw new BookCopyNotFoundException(copyId);
+        }
+
+        BookCopy copy = bookCopyRepository.findById(copyId)
+                .orElseThrow(
+                        () -> new BookCopyNotFoundException(copyId)
+                );
+
+        if (!copy.getBookTitle().getId().equals(bookTitleId)) {
+            throw new BookCopyNotFoundException(copyId);
+        }
+
+        return toDetails(copy);
     }
 
     @Override
@@ -220,79 +246,6 @@ public class BookCopyServiceImpl implements BookCopyService {
         bookCopyRepository.flush();
     }
 
-    private BookTitle findTitle(Long id) {
-        if (id == null || id <= 0) {
-            throw new BookTitleNotFoundException(id);
-        }
-
-        return bookTitleRepository.findById(id)
-                .orElseThrow(
-                        () -> new BookTitleNotFoundException(id)
-                );
-    }
-
-    private BookCopy findCopyForUpdate(
-            Long bookTitleId,
-            Long copyId
-    ) {
-        if (copyId == null || copyId <= 0) {
-            throw new BookCopyNotFoundException(copyId);
-        }
-
-        BookCopy copy = bookCopyRepository.findByIdForUpdate(copyId)
-                .orElseThrow(
-                        () -> new BookCopyNotFoundException(copyId)
-                );
-
-        if (!copy.getBookTitle().getId().equals(bookTitleId)) {
-            throw new BookCopyNotFoundException(copyId);
-        }
-
-        return copy;
-    }
-
-    private void validateCommand(BookCopyCommand command) {
-        if (command == null) {
-            throw new InvalidBookCopyException(
-                    "Book copy data is required."
-            );
-        }
-
-        String inventoryCode = command.inventoryCode();
-
-        if (inventoryCode == null || inventoryCode.isBlank()) {
-            throw new InvalidBookCopyException(
-                    "Inventory code is required."
-            );
-        }
-
-        if (inventoryCode.trim().length() > 100) {
-            throw new InvalidBookCopyException(
-                    "Inventory code must not exceed 100 characters."
-            );
-        }
-
-        try {
-            BookCopyCondition.fromValue(command.copyCondition());
-        } catch (IllegalArgumentException exception) {
-            throw new InvalidBookCopyException(
-                    exception.getMessage()
-            );
-        }
-    }
-
-    private BookCopyDetails toDetails(BookCopy copy) {
-        return new BookCopyDetails(
-                copy.getId(),
-                copy.getBookTitle().getId(),
-                copy.getInventoryCode(),
-                copy.getCopyCondition(),
-                copy.getStatus(),
-                copy.getAcquiredAt()
-        );
-    }
-
-
     @Override
     @Transactional
     public BookCopyDetails releaseFromMaintenance(
@@ -353,4 +306,86 @@ public class BookCopyServiceImpl implements BookCopyService {
         return toDetails(savedCopy);
     }
 
+    private BookTitle findTitle(Long id) {
+        if (id == null || id <= 0) {
+            throw new BookTitleNotFoundException(id);
+        }
+
+        return bookTitleRepository.findById(id)
+                .orElseThrow(
+                        () -> new BookTitleNotFoundException(id)
+                );
+    }
+
+    private BookCopy findCopyForUpdate(
+            Long bookTitleId,
+            Long copyId
+    ) {
+        if (copyId == null || copyId <= 0) {
+            throw new BookCopyNotFoundException(copyId);
+        }
+
+        BookCopy copy = bookCopyRepository.findByIdForUpdate(copyId)
+                .orElseThrow(
+                        () -> new BookCopyNotFoundException(copyId)
+                );
+
+        if (!copy.getBookTitle().getId().equals(bookTitleId)) {
+            throw new BookCopyNotFoundException(copyId);
+        }
+
+        return copy;
+    }
+
+    private void validateCommand(BookCopyCommand command) {
+        if (command == null) {
+            throw new InvalidBookCopyException(
+                    "Book copy data is required."
+            );
+        }
+
+        String inventoryCode = command.inventoryCode();
+
+        if (inventoryCode == null || inventoryCode.isBlank()) {
+            throw new InvalidBookCopyException(
+                    "Inventory code is required."
+            );
+        }
+
+        if (inventoryCode.trim().length() > 100) {
+            throw new InvalidBookCopyException(
+                    "Inventory code must not exceed 100 characters."
+            );
+        }
+
+        try {
+            BookCopyCondition.fromValue(command.copyCondition());
+        } catch (IllegalArgumentException exception) {
+            throw new InvalidBookCopyException(
+                    exception.getMessage()
+            );
+        }
+
+        LocalDate acquiredAt = command.acquiredAt();
+        LocalDate today = LocalDate.now(
+                ZoneId.of("Europe/Zagreb")
+        );
+
+        if (acquiredAt != null && acquiredAt.isAfter(today)) {
+            throw new InvalidBookCopyException(
+                    "Acquisition date cannot be in the future."
+            );
+        }
+    }
+
+    private BookCopyDetails toDetails(BookCopy copy) {
+        return new BookCopyDetails(
+                copy.getId(),
+                copy.getBookTitle().getId(),
+                copy.getInventoryCode(),
+                copy.getCopyCondition(),
+                copy.getStatus(),
+                copy.getAcquiredAt()
+        );
+    }
 }
