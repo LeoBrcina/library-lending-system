@@ -44,6 +44,8 @@ The professor's official assignment takes precedence over project decisions. An 
 | D-055 | Acquisition dates are optional but cannot be in the future. Keep this validation at the form and service layers. | Implemented for physical-copy creation and editing. Future dates are rejected; missing dates remain valid. |
 | D-056 | Require confirmation before withdrawal and permanent deletion. Use POST for state changes, show meaningful errors and keep service-layer rules authoritative. | Separate Thymeleaf confirmation pages and MVC endpoints implemented and tested. Release uses POST. |
 | D-057 | Use the existing responsive inventory table for physical copies, with horizontal scrolling on narrow screens. | Implemented and manually checked on mobile. A separate physical-copy card view was considered but not adopted. |
+| D-058 | Allow Book Title deactivation only when no active loans, active reservations or copies in `ON_LOAN` or `ON_HOLD` status exist. Allow permanent deletion only when no physical copies or reservation history exist. Preserve shared category records. Require confirmation and use POST for both actions. | Implemented through `BookTitleServiceImpl`, repository checks and Spring MVC/Thymeleaf workflows. Integration tests, MVC tests and manual checks passed. |
+| D-059 | Coordinate Book Title lifecycle operations and Physical Copy creation by acquiring a pessimistic lock on the parent Book Title row before checking its state. | Implemented in Book Title deactivation and deletion and Physical Copy creation. A PostgreSQL concurrency test passed. Other circulation-related locking remains future work. |
 
 ## 4. Persistence and integrity
 
@@ -53,11 +55,11 @@ The professor's official assignment takes precedence over project decisions. An 
 | D-022 | Use 12 application tables: `BookTitles`, `BookCopies`, `Categories`, `BookCategories`, `AppUsers`, `Roles`, `UserRoles`, `Loans`, `FineAccruals`, `Reservations`, `PurchaseSuggestions` and `AiSuggestionResults`. | All 12 tables created by V1 and verified in PostgreSQL. JPA persistence mappings completed through M2 Step 19.3C. `UserRoles` uses a many-to-many association without a separate entity. |
 | D-023 | Use singular PascalCase Java entities, plural PascalCase logical SQL table names and PascalCase logical column names. PostgreSQL lowercase folding is accepted; JPA mappings must match. | SQL naming and JPA mappings implemented and verified against PostgreSQL. |
 | D-024 | Model `BookCategories` as an attributed association entity with `IsPrimary`. Allow at most one primary category per title. | Composite primary key and partial unique index implemented in V1. JPA mapping and repository tests implemented. |
-| D-025 | Preserve loans, fine accruals and important reservation history. Allow physical deletion where safe; use withdrawal or deactivation when history must be retained. | Restrictive foreign keys implemented in V1–V2. Book Copy deletion and withdrawal checks implemented and tested at service level and exposed through the librarian interface. Circulation history is represented through JPA mappings. Remaining historical deletion rules will be addressed with the relevant services. |
-| D-026 | Use service-level transactions, database constraints and suitable locking for checkout, renewal, return and reservation allocation. | Selected constraints implemented in V1–V2. Book Copy administrative operations use pessimistic row locking. Loan optimistic locking and active-loan uniqueness tested. Circulation transactions and concurrency tests pending. |
+| D-025 | Preserve loans, fine accruals and important reservation history. Allow physical deletion where safe; use withdrawal or deactivation when history must be retained. | Restrictive foreign keys implemented in V1–V2. Book Copy deletion and withdrawal restrictions implemented and tested. Book Title deletion and deactivation restrictions implemented and tested. Remaining circulation history handling will be addressed in the corresponding services. |
+| D-026 | Use service-level transactions, database constraints and suitable locking for checkout, renewal, return and reservation allocation. | Selected constraints implemented in V1–V2. Book Copy administrative operations use pessimistic row locking. Book Title lifecycle operations and copy creation coordinate through parent-row locking. Loan optimistic locking and active-loan uniqueness tested. Circulation transactions and their concurrency tests remain pending. |
 | D-027 | Prefer lazy JPA fetching and use fetch joins or entity graphs when needed. Document an N+1 problem and its before/after SQL. | Lazy mappings implemented throughout the persistence model. Entity graph implemented for loading users with roles. N+1 measurement and optimization evidence pending. |
-| D-028 | Separate controllers, services and repositories. Use constructor injection, DTOs/forms, validation and appropriate exception handling. | Applied to Book Title and Physical Copy management, including web forms, service DTOs and administrative actions. Additional persistence mappings completed. Remaining application services and interfaces pending. |
-| D-052 | Keep applied Flyway versioned migrations unchanged. Use new migrations for later schema modifications. | Applied throughout M2. V1–V3 remain unchanged; Steps 19.3A–19.3C required no new migrations. |
+| D-028 | Separate controllers, services and repositories. Use constructor injection, DTOs/forms, validation and appropriate exception handling. | Applied to Book Title and Physical Copy management, including lifecycle confirmation workflows, service DTOs and administrative actions. Additional persistence mappings completed. Remaining application services and interfaces pending. |
+| D-052 | Keep applied Flyway versioned migrations unchanged. Use new migrations for later schema modifications. | Applied throughout M2. V1–V3 remain unchanged; Steps 19.3A–19.3C and Book Title lifecycle completion required no new migrations. |
 | D-053 | Separate permanent reference data from development-only demonstration data. Do not include default user credentials or date-dependent demonstration records in production migrations. | V3 contains three roles and ten categories. Separate development-only catalog fixtures implemented. |
 
 ## 5. AI purchase suggestions and scheduling
@@ -104,8 +106,8 @@ ADR-002 will document the provider interface, structured output, error handling 
 | D-032 | Use Java 25, Spring Boot 4.1, Maven Wrapper and IntelliJ IDEA. | Java 25.0.5, Spring Boot 4.1.2, Maven Wrapper 3.10.0 and IntelliJ IDEA 2026.2.3 verified. |
 | D-033 | Run PostgreSQL 17 through Docker Compose locally, bound to `127.0.0.1:5433`, with a persistent named volume. | PostgreSQL 17.11 and V1–V3 migrations verified. |
 | D-034 | Use ignored `.env` files and local IntelliJ environment settings for credentials. Commit only placeholders in `.env.example`. | Applied locally. |
-| D-035 | Use `LeoBrcina/library-lending-system` and small descriptive commits without conventional prefixes. | Repository active. Catalog management, physical-copy management and persistence mappings through Step 19.3C committed and pushed to `main`. GitHub Actions passed after the latest commit, as reported by the developer. |
-| D-036 | Maintain three ADRs, `docs/ai-usage.md`, `docs/ai-evaluation.md` and Figma documentation. | ADR-001 and existing documentation present. README, decision register and AI usage log being synchronized after M2 persistence completion. ADR-002, ADR-003 and evaluation document pending. |
+| D-035 | Use `LeoBrcina/library-lending-system` and small descriptive commits without conventional prefixes. | Repository active. M2 catalog management, physical-copy management, persistence mappings and Book Title lifecycle completion committed and pushed to `main`. GitHub Actions passed after commit `2da618f`, as reported by the developer. |
+| D-036 | Maintain three ADRs, `docs/ai-usage.md`, `docs/ai-evaluation.md` and Figma documentation. | ADR-001 and existing documentation present. README, decision register and AI usage log being synchronized after M2 completion. ADR-002, ADR-003 and evaluation document pending. |
 | D-037 | Use the professor's assignment and uploaded lectures/demos as primary references. Only the two authorized professor GitHub repositories may be used as external code references. | Ongoing policy. |
 | D-038 | Implement one major phase at a time, inspect current files before changing them and verify work before committing. | Ongoing workflow policy. |
 | D-047 | Deploy Spring Boot to **Render Free** through Docker with GitHub integration and HTTPS. | Selected; deployment pending. |
@@ -132,10 +134,10 @@ A short interval can demonstrate repeated scheduling during the defense, but it 
 | REST API with DTOs, pagination, sorting, status codes and ProblemDetail | Planned for LO5. |
 | AI feature through screen and endpoint | Purchase Suggestion and AI Result persistence implemented; Google Gemini integration pending. |
 | AI provider abstraction and deterministic stub tests | Planned. |
-| JUnit 6, Mockito, MVC/repository/Testcontainers tests and JaCoCo coverage | JUnit, MVC, repository and service integration tests implemented. Latest local verification passed 158 tests. Testcontainers, required slice tests and JaCoCo coverage work pending. |
+| JUnit 6, Mockito, MVC/repository/Testcontainers tests and JaCoCo coverage | JUnit, MVC, repository, service integration and focused concurrency tests implemented. Latest local verification passed 181 tests. Testcontainers, required slice tests and JaCoCo coverage work pending. |
 | Croatian/English internationalization, validation, date and number formatting | Planned for LO7. |
 | Two scheduled jobs and persistent coordination | Planned for LO7. |
-| Figma prototypes and reusable components | M1 wireframes and M2 high-fidelity prototype prepared. |
+| Figma prototypes and reusable components | M1 wireframes and M2 high-fidelity prototype prepared. Final sharing and PDF checks pending. |
 | AI evaluation with at least ten real cases | Pending. |
 | Managed database, HTTPS deployment, CI, performance measurements and recording | CI implemented and passing as reported by the developer; deployment, recording and performance evidence pending. |
 
@@ -260,14 +262,37 @@ A short interval can demonstrate repeated scheduling during the defense, but it 
 - No Flyway migration or additional dependency was necessary.
 - Member submission, AI processing and librarian review services remain pending.
 
+### M2 Book Title lifecycle completion — 2026-11-14
+
+- The final parent-child CRUD review identified Book Title deactivation and deletion as the remaining catalog-management operations.
+- Book Title deactivation and deletion were implemented through service methods, repository checks, Spring MVC endpoints and Thymeleaf confirmation screens.
+- Deactivation is blocked when a title has active loans, active reservations or copies in `ON_LOAN` or `ON_HOLD` status.
+- Deactivation retains the Book Title and its existing relationships.
+- Permanent deletion is permitted only when no physical copies and no reservation history exist.
+- Eligible deletion removes the title and its book-category associations without deleting shared categories.
+- Both lifecycle operations use pessimistic locking on the Book Title row.
+- Physical Copy creation was updated to lock the same parent row before checking that the title is active.
+- The shared locking approach prevents a copy-creation transaction from bypassing a concurrent deactivation check.
+- The implementation added integration and MVC tests for lifecycle rules, confirmation workflows, category preservation and rejected operations.
+- A dedicated concurrency test covered coordination between Book Title deactivation and Physical Copy creation.
+- The concurrency-test implementation was corrected to use the existing Book Title repository existence query.
+- The additional tests increased the suite from 158 to 181.
+- The developer reported all 181 tests passing with `./mvnw clean verify`.
+- The developer also manually tested the deactivation and deletion workflows and reported that all scenarios passed.
+- The implementation was committed and pushed as `2da618f` (`implement and test book title deletion and deactivation`).
+- GitHub Actions passed after the commit, as reported by the developer.
+- No new Flyway migration was required.
+- The Book Title and Physical Copy management workflows now cover the parent-child CRUD functionality planned for M2.
+- Authentication and circulation transactions remain separate future work.
+
 ### Next development work
 
-- Review the completed M2 implementation against the professor's mandatory requirements.
-- Verify full Book Title and Physical Copy parent-child CRUD coverage.
-- Address any missing Book Title deactivation or deletion interface requirements.
-- Complete documentation synchronization and verify the updated files.
-- Confirm the final M2 deliverables before beginning M3.
-- Implement authentication, authorization, circulation services, REST endpoints and AI integration in subsequent steps.
+- Complete the final M2 deliverable review.
+- Verify Figma prototype sharing permissions and finish the visual review of the exported PDF.
+- Synchronize the README, decision register and AI usage log with the verified M2 implementation.
+- Confirm the required milestone materials are ready for submission.
+- Review the dependencies between authentication, circulation services, REST endpoints and AI integration before starting M3.
+- Implement the next major functionality incrementally, with tests and verification before each commit.
 - Prepare ADR-002 and ADR-003 during their corresponding implementation phases.
 
 ## 9. Change management

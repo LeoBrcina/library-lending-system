@@ -15,11 +15,11 @@ The application follows a hybrid lending workflow: members will be able to brows
 
 Development follows the course milestones M1-M4 and the final submission requirements.
 
-**Current status:** M1 foundation and design completed. M2 persistence, catalog management, physical-copy management and high-fidelity Figma design have been implemented. The final M2 requirements review is pending.
+**Current status:** M1 foundation and design completed. M2 persistence, parent-child catalog management, physical-copy management and high-fidelity Figma design have been implemented. The core M2 implementation has passed its functional review, with final deliverable checks remaining.
 
 The application currently includes PostgreSQL persistence managed through Flyway, catalog services, Book Title management, Physical Copy management, user and role mappings, circulation persistence mappings and purchase-suggestion persistence. The application uses Spring MVC and Thymeleaf for the implemented web interfaces.
 
-The repository includes automated tests covering domain validation, service operations, MVC workflows and PostgreSQL persistence. The latest locally verified build completed successfully with 158 passing tests. GitHub Actions builds and tests the project automatically.
+The repository includes automated tests covering domain validation, service operations, MVC workflows, concurrency and PostgreSQL persistence. The latest locally verified build completed successfully with 181 passing tests. The developer also reported a successful GitHub Actions run after the latest implementation commit.
 
 The M2 Figma work includes reusable components, high-fidelity desktop and mobile screens, a tested clickable prototype and an accessibility design review.
 
@@ -59,6 +59,8 @@ Implemented:
 - Search, filter, sort and paginate book titles.
 - View book details, authors, categories and physical-copy information.
 - Create and edit book titles.
+- Deactivate eligible book titles.
+- Delete eligible book titles when no physical copies or reservation history exist.
 - Assign categories and select a primary category.
 - Validate book title forms and display appropriate errors.
 - Display empty catalog results.
@@ -70,7 +72,7 @@ Implemented:
 
 The catalog and physical-copy workflows use Spring MVC controllers, service classes, DTOs, form objects and Spring Data JPA repositories.
 
-Book Title deactivation exists at the service level. Its exposure through the web interface and the complete parent-child CRUD requirement will be reviewed during the final M2 audit.
+Book Title deactivation and deletion are available through confirmation pages and POST actions. The service layer checks existing physical copies, reservations and circulation state before permitting these operations.
 
 ### Member Features
 
@@ -91,6 +93,7 @@ The database mappings and repositories supporting users, loans, reservations, fi
 Implemented:
 
 - Manage book titles and their categories.
+- Deactivate or delete eligible book titles.
 - Manage physical-copy inventory.
 - Create and edit eligible physical copies.
 - Withdraw or delete eligible copies.
@@ -172,11 +175,19 @@ Physical-copy management follows additional rules:
 - Releasing a copy from maintenance requires an active title, acceptable condition and no conflicting circulation or reservation state.
 - Acquisition dates are optional but cannot be in the future.
 
-Physical-copy administrative operations use service-level validation, database integrity constraints and appropriate locking.
+Book Title management follows additional rules:
+
+- A title cannot be deactivated when active loans, active reservations or copies in `ON_LOAN` or `ON_HOLD` status exist.
+- Deactivation preserves the Book Title record and its relationships.
+- Permanent deletion is permitted only when a title has no physical copies and no reservation history.
+- Category records shared with other titles are preserved when a Book Title is deleted.
+- Physical Copy creation and Book Title deactivation use the same parent-row locking strategy to prevent conflicting concurrent operations.
+
+Book Title and Physical Copy administrative operations use service-level validation, database integrity constraints and appropriate locking.
 
 These policies are documented in greater detail in [docs/decisions.md](docs/decisions.md) and [ADR-001](docs/adr/001-persistence-model.md).
 
-**Implementation note:** Physical-copy administration rules have been implemented and tested. Loan renewals, reservation allocation, overdue fine calculation and other circulation policies remain planned business rules until their services are implemented and verified.
+**Implementation note:** Book Title and Physical Copy administration rules have been implemented and tested. Loan renewals, reservation allocation, overdue fine calculation and other circulation policies remain planned business rules until their services are implemented and verified.
 
 ## 5. M1 Deliverables
 
@@ -327,6 +338,8 @@ Repositories provide the required persistence operations and selected queries fo
 
 An entity graph is used for retrieving application users together with their assigned roles.
 
+The Book Title repository also provides locking and existence checks used by title lifecycle operations and Physical Copy creation.
+
 The required measured N+1 demonstration and SQL comparison remain pending.
 
 ### Book Title Management
@@ -338,6 +351,8 @@ The application includes Spring MVC and Thymeleaf workflows for:
 - Creating book titles.
 - Viewing book title details.
 - Editing book title information.
+- Deactivating eligible book titles.
+- Deleting eligible book titles.
 - Assigning and updating categories.
 - Selecting the primary category.
 - Handling invalid form submissions.
@@ -355,7 +370,15 @@ The implementation uses:
 
 Form objects and service DTOs separate the web layer from JPA entities.
 
-Book Title deactivation is implemented in the service layer. The complete parent CRUD screen requirement, including the appropriate deletion or deactivation workflow, requires a final M2 review.
+Deactivation and deletion have separate confirmation workflows. State-changing actions use POST requests and invoke the corresponding service operations.
+
+The service layer prevents deactivation when active loans, active reservations or copies in protected circulation states exist.
+
+Permanent deletion is restricted to titles without physical copies or reservation history. Existing category records are preserved.
+
+The lifecycle operations use a pessimistic lock on the Book Title row. Physical Copy creation locks the same parent row before checking whether the title is active.
+
+The workflows were verified with integration tests, MVC tests, a concurrency test and manual application testing.
 
 ### Physical Copy Management
 
@@ -382,6 +405,8 @@ The service layer enforces inventory validation, permitted administrative operat
 
 Physical-copy modifications use pessimistic locking where appropriate.
 
+Creation also locks the parent Book Title row before checking whether the title is active. This coordinates creation with Book Title deactivation.
+
 Withdrawal and deletion use separate confirmation pages. State-changing operations use POST requests.
 
 Physical-copy inventory is displayed in a table with horizontal scrolling on narrow screens.
@@ -393,6 +418,8 @@ The user interface was manually reviewed for creation, editing, release, withdra
 The project contains automated tests covering:
 
 - Catalog entity relationships and database constraints.
+- Book Title creation, editing, deactivation and deletion.
+- Book Title lifecycle restrictions and category preservation.
 - Book Title services and MVC workflows.
 - Physical-copy validation.
 - Physical-copy creation and retrieval.
@@ -400,6 +427,7 @@ The project contains automated tests covering:
 - Withdrawal and deletion restrictions.
 - Maintenance release.
 - Acquisition-date validation.
+- Concurrent Book Title deactivation and Physical Copy creation.
 - User and role persistence.
 - Circulation persistence and constraints.
 - Purchase suggestion persistence.
@@ -409,11 +437,13 @@ The circulation persistence tests include duplicate active-loan rejection, reser
 
 The purchase suggestion tests verify member ownership, librarian review information, status queries, multiple AI results and JSONB serialization and retrieval.
 
-**Latest local verification:** `./mvnw clean verify` completed successfully with 158 passing tests.
+The Book Title lifecycle tests cover service-level restrictions, web confirmation and POST workflows, successful and rejected operations and synchronization with Physical Copy creation.
+
+**Latest local verification:** `./mvnw clean verify` completed successfully with 181 passing tests.
 
 These tests establish the functionality currently implemented. They do not establish that the planned circulation, security or live AI workflows are complete.
 
-Further testing required by the professor includes repository slice tests, Testcontainers integration tests, deterministic AI stub tests, service-package coverage measurement and concurrency verification.
+Further testing required by the professor includes repository slice tests, Testcontainers integration tests, deterministic AI stub tests and service-package coverage measurement.
 
 ## 7. M2 High-Fidelity Figma Prototype
 
@@ -492,6 +522,11 @@ The following table maps the approved Figma designs to the current or planned Th
 | AI-Assisted Purchase Suggestion Review | Acquisitions review template | Planned |
 | Book Catalog — Mobile 390 | Responsive catalog layout | Implemented |
 | Edit Book Title — Mobile 390 | Responsive Book Title form | Implemented |
+
+Additional Book Title lifecycle templates include:
+
+- `templates/catalog/deactivate.html`
+- `templates/catalog/delete.html`
 
 Additional Physical Copy templates include:
 
@@ -601,7 +636,7 @@ From the repository root, run:
 ./mvnw clean verify
 ```
 
-The current test suite contains 158 tests, including domain validation tests, service tests, MVC tests and PostgreSQL integration tests.
+The current test suite contains 181 tests, including domain validation tests, service tests, MVC tests, concurrency tests and PostgreSQL integration tests.
 
 The integration tests require a running PostgreSQL database and a valid `DB_PASSWORD` environment variable.
 
@@ -625,7 +660,7 @@ The catalog is available at:
 http://localhost:8080/catalog
 ```
 
-The current application supports catalog browsing and Book Title and Physical Copy management.
+The current application supports catalog browsing and Book Title and Physical Copy management, including eligible deactivation, deletion, withdrawal and maintenance-release operations.
 
 Authentication and role-based access restrictions have not yet been implemented.
 
@@ -648,9 +683,9 @@ The workflow:
 
 The PostgreSQL service uses port 5432 in the GitHub Actions environment. The application datasource URL is overridden through `DB_URL`, so the workflow does not require changes to the local port 5433 configuration.
 
-**Latest verified checkpoint:** The developer reported a successful GitHub Actions run after the purchase suggestion and AI result persistence implementation was pushed in commit `507ec60`.
+**Latest verified checkpoint:** The developer reported a successful GitHub Actions run after the Book Title deletion, deactivation and concurrency changes were pushed in commit `2da618f`.
 
-The associated local Maven verification completed with 158 passing tests.
+The associated local Maven verification completed with 181 passing tests.
 
 The current workflow performs continuous integration only. Automatic production deployment is planned for a later milestone.
 
@@ -731,9 +766,11 @@ Implemented:
 - Purchase suggestion and AI analysis result persistence.
 - Catalog browsing, searching, filtering, sorting and pagination.
 - Book Title creation, details and editing.
+- Book Title deactivation and safe deletion.
 - Physical Copy creation, editing, maintenance release, withdrawal and deletion.
-- Domain validation and service-layer business rules for physical-copy administration.
-- MVC and PostgreSQL integration tests.
+- Domain validation and service-layer business rules for Book Title and Physical Copy administration.
+- Parent-row locking for Book Title lifecycle changes and Physical Copy creation.
+- MVC, concurrency and PostgreSQL integration tests.
 - GitHub Actions build-and-test workflow.
 - High-fidelity Figma screens and reusable components.
 - Responsive desktop and mobile design variants.
@@ -741,14 +778,14 @@ Implemented:
 - Design contrast review and rationale.
 - Eight-page prototype PDF export.
 
-Remaining M2 work:
+Remaining M2 checks:
 
-- Review complete parent-child CRUD coverage against the professor's specification.
-- Address any missing Book Title management operations or web workflows.
-- Verify remaining M2 deliverables and implementation evidence.
-- Synchronize project documentation with the verified implementation.
+- Verify anonymous or public access to the Figma prototype.
+- Complete the final visual review of the exported prototype PDF.
+- Confirm that the required milestone deliverables are ready for submission.
+- Keep documentation synchronized with the final verified implementation.
 
-**Status:** Implementation substantially complete. Final requirements review pending.
+**Status:** Core persistence and parent-child CRUD implementation completed and verified. Final deliverable checks remain.
 
 ### M3 — Security, REST API and AI
 
@@ -815,7 +852,7 @@ ADR-003 will address reliable scheduled processing, locking and recovery behavio
 
 ## 13. Current Project Status
 
-**Milestone:** M2 implementation substantially complete; final compliance review pending.
+**Milestone:** M2 core implementation completed and verified; final deliverable review remaining.
 
 **Implemented and verified:**
 
@@ -830,13 +867,15 @@ ADR-003 will address reliable scheduled processing, locking and recovery behavio
 - Purchase suggestion and AI analysis result persistence.
 - PostgreSQL JSONB mapping for AI recommendations.
 - Catalog query functionality with search, filtering, sorting and pagination.
-- Book Title creation, details and editing.
+- Book Title creation, details, editing, deactivation and safe deletion.
+- Book Title lifecycle restrictions and category preservation.
 - Physical Copy creation, editing, withdrawal, safe deletion and maintenance release.
-- Service-level validation and locking for physical-copy administration.
+- Service-level validation and locking for Book Title and Physical Copy administration.
+- Concurrency protection between Book Title deactivation and Physical Copy creation.
 - Spring MVC and Thymeleaf catalog management interfaces.
 - Responsive catalog and physical-copy management layouts.
-- 158 passing automated tests through local Maven verification.
-- GitHub Actions CI, including a successful run reported after commit `507ec60`.
+- 181 passing automated tests through local Maven verification.
+- GitHub Actions CI, including a successful run reported after commit `2da618f`.
 
 **Prepared and reviewed:**
 
@@ -850,12 +889,12 @@ ADR-003 will address reliable scheduled processing, locking and recovery behavio
 - Eight-page prototype PDF export.
 - AI provider and deployment decisions.
 
-**Remaining M2 review:**
+**Remaining M2 checks:**
 
-- Complete parent-child CRUD requirements.
-- Book Title deactivation or deletion interface.
-- Final milestone compliance verification.
-- Documentation synchronization.
+- Verify Figma prototype sharing permissions.
+- Complete final prototype PDF visual verification.
+- Confirm milestone submission readiness.
+- Synchronize documentation with the verified implementation.
 
 **Not yet implemented:**
 

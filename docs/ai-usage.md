@@ -358,6 +358,21 @@
 - **Git commit:** `507ec60` (`implement and test purchase suggestion and AI result persistence`).
 - **Remaining work:** Implement member submission, AI processing, librarian review, provider integration and deterministic AI stub tests.
 
+## M2 — Book Title lifecycle completion
+
+### AI-032 — Implement Book Title deletion and deactivation
+
+- **Date:** 2026-11-14.
+- **Task:** Complete the Book Title lifecycle operations and the remaining parent-child CRUD requirements for M2.
+- **AI assistance:** Reviewed the existing Book Title and Physical Copy services, repositories, web controllers and tests. Prepared the deactivation and deletion workflows, repository checks, confirmation pages, MVC tests and PostgreSQL integration tests. Helped review the concurrency risk between creating a Physical Copy and deactivating its parent Book Title.
+- **Developer work:** Implemented the service, repository, controller, template and test changes locally in IntelliJ. Ran Maven verification throughout the implementation, manually tested the title lifecycle operations and corrected issues found during review. Added the concurrency test, confirmed the final test suite passed and pushed the completed implementation.
+- **Changes and decisions:** Deactivation preserves the title but is rejected when active loans, active reservations or copies in `ON_LOAN` or `ON_HOLD` status exist. Permanent deletion requires no physical copies and no reservation history. Deleting an eligible title removes its book-category associations while retaining shared category records. Deactivation and deletion use a pessimistic lock on the Book Title row. Physical Copy creation now locks the same parent row before checking whether the title is active.
+- **Corrections:** During concurrency-test preparation, an initial proposal referenced an `existsPhysicalCopies` method on `BookCopyRepository` that was not present in the project. The implementation was corrected to use the existing `BookTitleRepository` query, and the revised test passed.
+- **Verification:** The work added 23 automated tests, increasing the full suite from 158 to 181. The tests covered Book Title lifecycle restrictions, category preservation, MVC confirmation and POST workflows, and concurrent deactivation and copy creation. The developer reported that all manual tests passed, followed by a successful `./mvnw clean verify` with 181 tests passing. The implementation was pushed to GitHub, and the developer reported a successful CI run. The AI did not independently execute the local test suite.
+- **Files:** `BookTitleService.java`, `BookTitleServiceImpl.java`, `BookTitleRepository.java`, `BookCopyServiceImpl.java`, `BookTitleManagementController.java`, Book Title lifecycle integration and MVC tests, the concurrency test, `templates/catalog/details.html`, `templates/catalog/deactivate.html`, `templates/catalog/delete.html` and related styling.
+- **Git commit:** `2da618f` (`implement and test book title deletion and deactivation`).
+- **Remaining work:** Complete the final M2 deliverable checks and documentation review. Authentication, circulation services and the remaining M3 and M4 features are not part of this implementation.
+
 ## Verification summary
 
 ### M1 — 2026-10-29 to 2026-10-30
@@ -471,18 +486,36 @@
 | Continuous integration | GitHub Actions passed after the latest persistence commit, as reported by the developer. |
 | Database migrations | No new migrations required for Steps 19.3A–19.3C. |
 
+### M2 — Book Title lifecycle verification, 2026-11-14
+
+| Area | Verified result |
+|---|---|
+| Book Title deactivation | Eligible titles can be deactivated while active circulation and protected copy states prevent deactivation. |
+| Book Title deletion | Eligible titles without physical copies or reservation history can be deleted. |
+| Category associations | Deleting a title preserves shared category records. |
+| Confirmation workflows | Deactivate and Delete confirmation pages and POST actions covered by MVC tests and manual checks. |
+| Concurrency | Automated test covers coordination between Book Title deactivation and Physical Copy creation using parent-row locking. |
+| Additional tests | 23 tests added after the previous 158-test checkpoint. |
+| Full Maven verification | 181 tests passed with `./mvnw clean verify`, as reported by the developer. |
+| Manual verification | The developer reported all Book Title lifecycle scenarios passing. |
+| Git | Implementation committed and pushed as `2da618f`. |
+| Continuous integration | GitHub Actions passed after the lifecycle commit, as reported by the developer. |
+| Database migrations | No additional Flyway migration required. |
+
 ## Remaining work
 
 The database migrations, permanent reference data, JPA mappings, repositories, Book Title management screens, Book Copy service operations, physical-copy management screens, integration tests and GitHub Actions CI workflow are in place.
 
 All 12 application tables have the required JPA persistence mappings, including the `UserRoles` join table represented through the existing many-to-many relationship. The remaining persistence work concerns future application features rather than unmapped tables.
 
-The final M2 review must confirm the professor's full parent-child CRUD requirement, particularly the Book Title deletion or deactivation workflow exposed through the web interface.
+Book Title creation, editing, deactivation and deletion are implemented through the web interface. Physical Copy creation, editing, withdrawal, maintenance release and deletion are also implemented. The parent-child catalog management functionality has passed local automated verification and the developer's manual checks.
+
+The remaining M2 work concerns final deliverable verification, including Figma sharing permissions, the exported prototype PDF and documentation synchronization.
 
 Circulation services, security, REST API, Gemini integration, scheduling, internationalization and deployment remain pending.
 
-Additional test categories, concurrency verification, service coverage and performance measurements are also required. No coverage percentages, AI evaluation scores or production deployment results have been claimed.
+Additional test categories, broader concurrency verification, service coverage and performance measurements are also required. No coverage percentages, AI evaluation scores or production deployment results have been claimed.
 
 The M2 Figma work includes reusable components, desktop and mobile screens, a clickable prototype, contrast measurements, design rationale and PDF export. The implemented application's accessibility and functional behavior must be tested separately from the prototype.
 
-The next checkpoint is to complete the M2 requirements review, address any missing functionality and synchronize the remaining project documentation before moving into M3.
+The next checkpoint is to complete the final M2 deliverable checks, synchronize the project documentation and review the dependencies for M3 implementation.
