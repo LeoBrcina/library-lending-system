@@ -16,5 +16,7 @@ public interface BookTitleService {
 
     void deactivate(Long id);
 
+    void delete(Long id);
+
     Page<BookCatalogItem> search(BookCatalogSearchCriteria criteria);
 }

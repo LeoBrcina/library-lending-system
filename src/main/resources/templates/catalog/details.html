@@ -307,6 +307,17 @@
                        th:href="@{/catalog/{id}/edit(id=${book.id})}">
                         Edit Book Title
                     </a>
+
+                    <a class="button button--secondary"
+                       th:if="${book.active}"
+                       th:href="@{/catalog/{id}/deactivate(id=${book.id})}">
+                        Deactivate Title
+                    </a>
+
+                    <a class="button button--danger"
+                       th:href="@{/catalog/{id}/delete(id=${book.id})}">
+                        Delete Title
+                    </a>
                 </div>
 
             </div>

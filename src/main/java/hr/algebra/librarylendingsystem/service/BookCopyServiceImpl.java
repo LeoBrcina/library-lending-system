@@ -40,7 +40,7 @@ public class BookCopyServiceImpl implements BookCopyService {
             Long bookTitleId,
             BookCopyCommand command
     ) {
-        BookTitle title = findTitle(bookTitleId);
+        BookTitle title = findTitleForUpdate(bookTitleId);
 
         if (!title.isActive()) {
             throw new InvalidBookCopyException(
@@ -312,6 +312,17 @@ public class BookCopyServiceImpl implements BookCopyService {
         }
 
         return bookTitleRepository.findById(id)
+                .orElseThrow(
+                        () -> new BookTitleNotFoundException(id)
+                );
+    }
+
+    private BookTitle findTitleForUpdate(Long id) {
+        if (id == null || id <= 0) {
+            throw new BookTitleNotFoundException(id);
+        }
+
+        return bookTitleRepository.findByIdForUpdate(id)
                 .orElseThrow(
                         () -> new BookTitleNotFoundException(id)
                 );

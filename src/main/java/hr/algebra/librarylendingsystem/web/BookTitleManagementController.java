@@ -178,6 +178,89 @@ public class BookTitleManagementController {
         return "redirect:/catalog/" + id;
     }
 
+    @GetMapping("/{id}/deactivate")
+    public String showDeactivateConfirmation(
+            @PathVariable Long id,
+            Model model
+    ) {
+        BookTitleDetails book = findBookTitle(id);
+
+        if (!book.active()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Book title is already inactive."
+            );
+        }
+
+        model.addAttribute("book", book);
+
+        return "catalog/deactivate";
+    }
+
+    @PostMapping("/{id}/deactivate")
+    public String deactivateBookTitle(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            bookTitleService.deactivate(id);
+        } catch (BookTitleNotFoundException exception) {
+            throw notFound(exception);
+        } catch (InvalidBookTitleException exception) {
+            redirectAttributes.addFlashAttribute(
+                    "errorMessage",
+                    exception.getMessage()
+            );
+
+            return "redirect:/catalog/" + id;
+        }
+
+        redirectAttributes.addFlashAttribute(
+                "successMessage",
+                "Book title deactivated successfully."
+        );
+
+        return "redirect:/catalog/" + id;
+    }
+
+    @GetMapping("/{id}/delete")
+    public String showDeleteConfirmation(
+            @PathVariable Long id,
+            Model model
+    ) {
+        BookTitleDetails book = findBookTitle(id);
+
+        model.addAttribute("book", book);
+
+        return "catalog/delete";
+    }
+
+    @PostMapping("/{id}/delete")
+    public String deleteBookTitle(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            bookTitleService.delete(id);
+        } catch (BookTitleNotFoundException exception) {
+            throw notFound(exception);
+        } catch (InvalidBookTitleException exception) {
+            redirectAttributes.addFlashAttribute(
+                    "errorMessage",
+                    exception.getMessage()
+            );
+
+            return "redirect:/catalog/" + id;
+        }
+
+        redirectAttributes.addFlashAttribute(
+                "successMessage",
+                "Book title deleted successfully."
+        );
+
+        return "redirect:/catalog";
+    }
+
     private BookTitleDetails findBookTitle(Long id) {
         try {
             return bookTitleService.findById(id);

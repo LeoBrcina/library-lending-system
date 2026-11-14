@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Book Title | P03 Library</title>
+    <link rel="stylesheet" th:href="@{/css/library.css(v=4)}">
+    <link rel="stylesheet" th:href="@{/css/book-title-form.css(v=2)}">
+    <link rel="stylesheet" th:href="@{/css/book-copy-actions.css(v=1)}">
+</head>
+<body>
+<div class="app-shell">
+
+    <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+
+    <div class="app-workspace">
+        <header th:replace="~{fragments/workspace-header :: workspaceHeader}">
+        </header>
+
+        <main class="page-content page-content--book-form">
+
+            <nav class="form-breadcrumb" aria-label="Breadcrumb">
+                <a th:href="@{/catalog}">Book Catalog</a>
+                <span aria-hidden="true">/</span>
+
+                <a th:href="@{/catalog/{id}(id=${book.id})}"
+                   th:text="${book.title}">
+                    Book Title
+                </a>
+
+                <span aria-hidden="true">/</span>
+                <span aria-current="page">Delete Book Title</span>
+            </nav>
+
+            <div class="page-heading">
+                <h1>Delete Book Title</h1>
+
+                <p class="page-heading__subtitle">
+                    Review the book title before permanently deleting it.
+                </p>
+            </div>
+
+            <div class="book-title-form">
+
+                <section class="form-panel"
+                         aria-labelledby="delete-details-heading">
+
+                    <div class="form-panel__heading">
+                        <h2 id="delete-details-heading">
+                            Book Title to Delete
+                        </h2>
+
+                        <p>
+                            Verify that the correct book title
+                            has been selected.
+                        </p>
+                    </div>
+
+                    <dl class="copy-action-details">
+
+                        <div class="copy-action-details__item">
+                            <dt>Book title</dt>
+                            <dd th:text="${book.title}">
+                                Example Book Title
+                            </dd>
+                        </div>
+
+                        <div class="copy-action-details__item">
+                            <dt>Authors</dt>
+                            <dd th:text="${book.authors}">
+                                Example Author
+                            </dd>
+                        </div>
+
+                        <div class="copy-action-details__item">
+                            <dt>ISBN</dt>
+                            <dd th:text="${book.isbn != null ? book.isbn : 'Not provided'}">
+                                Not provided
+                            </dd>
+                        </div>
+
+                        <div class="copy-action-details__item">
+                            <dt>Current status</dt>
+                            <dd th:text="${book.active ? 'Active' : 'Inactive'}">
+                                Active
+                            </dd>
+                        </div>
+
+                    </dl>
+
+                </section>
+
+                <section class="copy-action-warning"
+                         aria-labelledby="delete-warning-heading">
+
+                    <h2 id="delete-warning-heading">
+                        Confirm Permanent Deletion
+                    </h2>
+
+                    <p>
+                        This action permanently removes the book title
+                        and its category associations from the library catalog.
+                    </p>
+
+                    <p>
+                        <strong>This action cannot be undone.</strong>
+                    </p>
+
+                    <p>
+                        Book titles with physical copies or reservation history
+                        cannot be deleted. If these records exist,
+                        the operation will be refused.
+                    </p>
+
+                    <p>
+                        Use deactivation to remove a title from active
+                        circulation while preserving its records.
+                    </p>
+
+                </section>
+
+                <form class="form-actions copy-action-form"
+                      th:action="@{/catalog/{id}/delete(id=${book.id})}"
+                      method="post">
+
+                    <a class="button button--secondary"
+                       th:href="@{/catalog/{id}(id=${book.id})}">
+                        Cancel
+                    </a>
+
+                    <button class="button button--danger"
+                            type="submit">
+                        Permanently Delete Title
+                    </button>
+
+                </form>
+
+            </div>
+
+        </main>
+    </div>
+</div>
+</body>
+</html>

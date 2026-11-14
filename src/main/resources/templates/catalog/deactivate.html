@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deactivate Book Title | P03 Library</title>
+    <link rel="stylesheet" th:href="@{/css/library.css(v=4)}">
+    <link rel="stylesheet" th:href="@{/css/book-title-form.css(v=2)}">
+    <link rel="stylesheet" th:href="@{/css/book-copy-actions.css(v=1)}">
+</head>
+<body>
+<div class="app-shell">
+
+    <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+
+    <div class="app-workspace">
+        <header th:replace="~{fragments/workspace-header :: workspaceHeader}">
+        </header>
+
+        <main class="page-content page-content--book-form">
+
+            <nav class="form-breadcrumb" aria-label="Breadcrumb">
+                <a th:href="@{/catalog}">Book Catalog</a>
+                <span aria-hidden="true">/</span>
+
+                <a th:href="@{/catalog/{id}(id=${book.id})}"
+                   th:text="${book.title}">
+                    Book Title
+                </a>
+
+                <span aria-hidden="true">/</span>
+                <span aria-current="page">Deactivate Book Title</span>
+            </nav>
+
+            <div class="page-heading">
+                <h1>Deactivate Book Title</h1>
+
+                <p class="page-heading__subtitle">
+                    Confirm that this book title should be removed
+                    from active circulation.
+                </p>
+            </div>
+
+            <div class="book-title-form">
+
+                <section class="form-panel"
+                         aria-labelledby="deactivate-details-heading">
+
+                    <div class="form-panel__heading">
+                        <h2 id="deactivate-details-heading">
+                            Book Title to Deactivate
+                        </h2>
+
+                        <p>
+                            Review the book information before continuing.
+                        </p>
+                    </div>
+
+                    <dl class="copy-action-details">
+
+                        <div class="copy-action-details__item">
+                            <dt>Book title</dt>
+                            <dd th:text="${book.title}">
+                                Example Book Title
+                            </dd>
+                        </div>
+
+                        <div class="copy-action-details__item">
+                            <dt>Authors</dt>
+                            <dd th:text="${book.authors}">
+                                Example Author
+                            </dd>
+                        </div>
+
+                        <div class="copy-action-details__item">
+                            <dt>ISBN</dt>
+                            <dd th:text="${book.isbn != null ? book.isbn : 'Not provided'}">
+                                Not provided
+                            </dd>
+                        </div>
+
+                        <div class="copy-action-details__item">
+                            <dt>Current status</dt>
+                            <dd th:text="${book.active ? 'Active' : 'Inactive'}">
+                                Active
+                            </dd>
+                        </div>
+
+                    </dl>
+
+                </section>
+
+                <section class="copy-action-warning"
+                         aria-labelledby="deactivate-warning-heading">
+
+                    <h2 id="deactivate-warning-heading">
+                        Confirm Deactivation
+                    </h2>
+
+                    <p>
+                        This book title will be marked as
+                        <strong>Inactive</strong> and will no longer
+                        be available for borrowing.
+                    </p>
+
+                    <p>
+                        The book title, its physical copies and
+                        historical records will be preserved.
+                    </p>
+
+                    <p>
+                        Deactivation is not permitted while the title
+                        has active loans or reservations.
+                    </p>
+
+                    <p>
+                        Deactivation cannot currently be reversed
+                        through the librarian interface.
+                    </p>
+
+                </section>
+
+                <form class="form-actions copy-action-form"
+                      th:action="@{/catalog/{id}/deactivate(id=${book.id})}"
+                      method="post">
+
+                    <a class="button button--secondary"
+                       th:href="@{/catalog/{id}(id=${book.id})}">
+                        Cancel
+                    </a>
+
+                    <button class="button button--danger"
+                            type="submit">
+                        Confirm Deactivation
+                    </button>
+
+                </form>
+
+            </div>
+
+        </main>
+    </div>
+</div>
+</body>
+</html>

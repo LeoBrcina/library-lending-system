@@ -102,8 +102,48 @@ public class BookTitleServiceImpl implements BookTitleService {
     @Override
     @Transactional
     public void deactivate(Long id) {
-        BookTitle title = findTitle(id);
+        BookTitle title = findTitleForUpdate(id);
+
+        if (!title.isActive()) {
+            throw new InvalidBookTitleException(
+                    "Book title is already inactive."
+            );
+        }
+
+        if (bookTitleRepository.existsActiveLoans(id)
+                || bookTitleRepository.existsActiveReservations(id)
+                || bookTitleRepository.existsCopiesInCirculation(id)) {
+            throw new InvalidBookTitleException(
+                    "Cannot deactivate a book title with active loans " +
+                            "or reservations."
+            );
+        }
+
         title.setActive(false);
+        bookTitleRepository.saveAndFlush(title);
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        BookTitle title = findTitleForUpdate(id);
+
+        if (bookTitleRepository.existsPhysicalCopies(id)) {
+            throw new InvalidBookTitleException(
+                    "Cannot delete a book title with physical copies. " +
+                            "Deactivate the title instead."
+            );
+        }
+
+        if (bookTitleRepository.existsReservationHistory(id)) {
+            throw new InvalidBookTitleException(
+                    "Cannot delete a book title with reservation history. " +
+                            "Deactivate the title instead."
+            );
+        }
+
+        bookTitleRepository.delete(title);
+        bookTitleRepository.flush();
     }
 
     @Override
@@ -119,6 +159,17 @@ public class BookTitleServiceImpl implements BookTitleService {
         }
 
         return bookTitleRepository.findById(id)
+                .orElseThrow(
+                        () -> new BookTitleNotFoundException(id)
+                );
+    }
+
+    private BookTitle findTitleForUpdate(Long id) {
+        if (id == null || id <= 0) {
+            throw new BookTitleNotFoundException(id);
+        }
+
+        return bookTitleRepository.findByIdForUpdate(id)
                 .orElseThrow(
                         () -> new BookTitleNotFoundException(id)
                 );
