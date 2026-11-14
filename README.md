@@ -1,4 +1,3 @@
-
 # P03 Library Lending System
 
 [![Java CI](https://github.com/LeoBrcina/library-lending-system/actions/workflows/ci.yml/badge.svg)](https://github.com/LeoBrcina/library-lending-system/actions/workflows/ci.yml)
@@ -16,9 +15,15 @@ The application follows a hybrid lending workflow: members will be able to brows
 
 Development follows the course milestones M1-M4 and the final submission requirements.
 
-**Current status:** M1 foundation and design completed. M2 implementation is in progress. The PostgreSQL schema, Flyway migrations, reference data, initial catalog JPA mappings, repositories and persistence integration tests have been implemented. GitHub Actions CI builds and tests the project automatically.
+**Current status:** M1 foundation and design completed. M2 persistence, catalog management, physical-copy management and high-fidelity Figma design have been implemented. The final M2 requirements review is pending.
 
-The M2 Figma design work is also prepared, including reusable components, high-fidelity desktop and mobile screens, a tested clickable prototype and an accessibility design review. The catalog business services and web interfaces have not yet been implemented.
+The application currently includes PostgreSQL persistence managed through Flyway, catalog services, Book Title management, Physical Copy management, user and role mappings, circulation persistence mappings and purchase-suggestion persistence. The application uses Spring MVC and Thymeleaf for the implemented web interfaces.
+
+The repository includes automated tests covering domain validation, service operations, MVC workflows and PostgreSQL persistence. The latest locally verified build completed successfully with 158 passing tests. GitHub Actions builds and tests the project automatically.
+
+The M2 Figma work includes reusable components, high-fidelity desktop and mobile screens, a tested clickable prototype and an accessibility design review.
+
+Authentication, circulation services, REST endpoints, live AI integration, internationalization, scheduled jobs and public deployment remain future work.
 
 ## 2. Technology Stack
 
@@ -28,11 +33,13 @@ The M2 Figma design work is also prepared, including reusable components, high-f
 | Framework | Spring Boot 4.1.2 |
 | Web layer | Spring MVC |
 | Server-side templates | Thymeleaf |
-| Persistence | Spring Data JPA / Hibernate |
+| Persistence | Spring Data JPA / Hibernate 7 |
 | Database | PostgreSQL 17 |
 | Database migrations | Flyway |
+| Connection pooling | HikariCP |
 | Security | Spring Security 7 (planned) |
 | Build tool | Maven Wrapper 3.10.0 |
+| Testing | JUnit 6 and Spring Boot testing |
 | Continuous integration | GitHub Actions |
 | Local development | Docker Compose, IntelliJ IDEA |
 | AI provider | Google Gemini API (selected, not integrated) |
@@ -40,18 +47,34 @@ The M2 Figma design work is also prepared, including reusable components, high-f
 | Planned managed database | Neon Free |
 | UI/UX design | Figma |
 
-## 3. Planned Application Features
+## 3. Application Features
 
-The following features describe the intended application. Unless explicitly identified as implemented, they remain planned.
+The following sections distinguish implemented functionality from planned application features.
 
 ### Library Catalog
 
-- Browse and search the library catalog.
-- View book details, authors, categories and availability.
-- Manage book titles and their individual physical copies.
-- Maintain relationships between book titles and categories.
+Implemented:
+
+- Browse the library catalog.
+- Search, filter, sort and paginate book titles.
+- View book details, authors, categories and physical-copy information.
+- Create and edit book titles.
+- Assign categories and select a primary category.
+- Validate book title forms and display appropriate errors.
+- Display empty catalog results.
+- Manage individual physical copies through librarian-facing screens.
+- Create, edit, withdraw and delete eligible physical copies.
+- Release eligible copies from maintenance.
+- Display physical-copy conditions, circulation statuses and inventory counts.
+- Provide responsive catalog and physical-copy management interfaces.
+
+The catalog and physical-copy workflows use Spring MVC controllers, service classes, DTOs, form objects and Spring Data JPA repositories.
+
+Book Title deactivation exists at the service level. Its exposure through the web interface and the complete parent-child CRUD requirement will be reviewed during the final M2 audit.
 
 ### Member Features
+
+Planned:
 
 - View active and historical loans.
 - Request eligible loan renewals.
@@ -59,19 +82,40 @@ The following features describe the intended application. Unless explicitly iden
 - Reserve titles when no borrowable copies are available.
 - Track reservations and pickup deadlines.
 - Submit book purchase suggestions.
+- View purchase suggestion history and review decisions.
+
+The database mappings and repositories supporting users, loans, reservations, fines and purchase suggestions have been implemented. Member-facing application services and interfaces remain pending.
 
 ### Librarian Features
 
-- Manage book titles and physical copies.
+Implemented:
+
+- Manage book titles and their categories.
+- Manage physical-copy inventory.
+- Create and edit eligible physical copies.
+- Withdraw or delete eligible copies.
+- Release repaired copies from maintenance.
+- View physical-copy conditions and circulation statuses.
+
+Planned:
+
 - Perform physical checkout and return.
 - Manage reservations and copy allocation.
+- Process loan renewals.
 - Review purchase suggestions.
 - Confirm or override AI-assisted acquisition recommendations.
 
+The existing librarian-oriented catalog interfaces are not yet protected by role-based authentication.
+
 ### Administrator Features
+
+Planned:
 
 - Manage user accounts.
 - Assign and manage application roles.
+- Access administrator-specific functionality.
+
+The `AppUser` and `Role` entities, repositories and role reference data have been implemented. Authentication, authorization and administrative screens remain pending.
 
 ### AI-Assisted Purchase Suggestions
 
@@ -87,7 +131,15 @@ The planned AI workflow will:
 
 AI recommendations will be advisory. Purchase decisions will remain under human control.
 
-The Figma prototype illustrates the intended review interface using sample data. No live Gemini integration or AI evaluation has been completed.
+The persistence layer currently includes `PurchaseSuggestion` and `AiSuggestionResult` entities with their repositories and integration tests.
+
+AI recommendations are stored separately from the librarian's review information. Multiple analysis results can be associated with the same purchase suggestion.
+
+The `AiSuggestionResult` entity uses Hibernate JSON mapping for PostgreSQL JSONB columns containing category recommendations and potential duplicate candidates.
+
+The Figma prototype illustrates the intended review interface using sample data.
+
+No live Gemini integration, AI processing service or AI evaluation has been completed.
 
 ## 4. Key Business Rules
 
@@ -108,9 +160,23 @@ The current project design includes the following policies:
 
 Outstanding unpaid fines do not independently prevent borrowing.
 
+Physical-copy management follows additional rules:
+
+- Physical condition and circulation status are separate properties.
+- Accepted conditions are `NEW`, `GOOD`, `FAIR`, `POOR` and `DAMAGED`.
+- Accepted statuses are `AVAILABLE`, `ON_LOAN`, `ON_HOLD`, `MAINTENANCE` and `WITHDRAWN`.
+- Copies in `POOR` or `DAMAGED` condition must be placed in maintenance.
+- Inventory metadata can be edited only when a copy is available or in maintenance.
+- Withdrawal preserves the physical-copy record and its history.
+- Permanent deletion is prohibited when relevant loan or reservation-allocation history exists.
+- Releasing a copy from maintenance requires an active title, acceptable condition and no conflicting circulation or reservation state.
+- Acquisition dates are optional but cannot be in the future.
+
+Physical-copy administrative operations use service-level validation, database integrity constraints and appropriate locking.
+
 These policies are documented in greater detail in [docs/decisions.md](docs/decisions.md) and [ADR-001](docs/adr/001-persistence-model.md).
 
-**Implementation note:** These are accepted business rules, not claims that they have already been implemented or tested.
+**Implementation note:** Physical-copy administration rules have been implemented and tested. Loan renewals, reservation allocation, overdue fine calculation and other circulation policies remain planned business rules until their services are implemented and verified.
 
 ## 5. M1 Deliverables
 
@@ -160,7 +226,7 @@ The screens cover public and member workflows, librarian operations, administrat
 
 The grayscale M1 wireframes are preserved separately from the M2 high-fidelity designs.
 
-## 6. M2 Persistence Implementation
+## 6. M2 Persistence and Catalog Implementation
 
 ### Database Schema and Migrations
 
@@ -178,9 +244,13 @@ Hibernate is configured with `ddl-auto=validate`, meaning Flyway owns schema cre
 
 Applied Flyway migrations are not modified. Subsequent database changes will use new migrations.
 
+No additional migration was necessary for the M2 entity and repository implementations.
+
 ### Implemented JPA Entities
 
-The following catalog persistence classes have been created:
+The persistence layer includes:
+
+**Catalog:**
 
 - `BookTitle`
 - `BookCopy`
@@ -188,28 +258,166 @@ The following catalog persistence classes have been created:
 - `BookCategory`
 - `BookCategoryId`
 
-The mappings demonstrate a one-to-many relationship between book titles and physical copies, and an attributed many-to-many relationship between book titles and categories through `BookCategory`.
+**Users and roles:**
 
-`BookCategoryId` provides the composite identifier for the association entity.
+- `AppUser`
+- `Role`
 
-The remaining application tables exist in PostgreSQL but have not yet been mapped to Java.
+**Circulation:**
+
+- `Reservation`
+- `ReservationStatus`
+- `Loan`
+- `FineAccrual`
+
+**Purchase suggestions:**
+
+- `PurchaseSuggestion`
+- `PurchaseSuggestionStatus`
+- `AiSuggestionResult`
+- `AiProcessingStatus`
+
+Additional domain enums include `BookCopyCondition` and `BookCopyStatus`.
+
+The mappings demonstrate:
+
+- A one-to-many relationship between book titles and physical copies.
+- An attributed many-to-many relationship between book titles and categories.
+- A many-to-many relationship between users and roles.
+- Optional relationships for reservation allocation, loan fulfillment and librarian review.
+- Relationships between loans and fine accruals.
+- Relationships between purchase suggestions and AI analysis results.
+
+`BookCategoryId` provides the composite identifier for the attributed book-category association.
+
+User-role assignments use the existing `UserRoles` join table without a separate association entity.
+
+The database schema also provides constraints for active loans, active reservations, reservation allocations, fine accrual uniqueness and other integrity requirements.
+
+Actual circulation transitions and scheduled processing remain future service-layer work.
 
 ### Spring Data Repositories
 
-Four repositories provide persistence access to the initial catalog model:
+The implemented repositories are:
+
+**Catalog:**
 
 - `BookTitleRepository`
 - `BookCopyRepository`
 - `CategoryRepository`
 - `BookCategoryRepository`
 
-Repository integration tests verify persistence, retrieval, entity relationships and the database restriction against multiple primary categories for a title.
+**Users and roles:**
 
-Catalog business services, DTOs, validation rules, controllers and Thymeleaf CRUD screens are the next implementation steps.
+- `AppUserRepository`
+- `RoleRepository`
+
+**Circulation:**
+
+- `ReservationRepository`
+- `LoanRepository`
+- `FineAccrualRepository`
+
+**Purchase suggestions:**
+
+- `PurchaseSuggestionRepository`
+- `AiSuggestionResultRepository`
+
+Repositories provide the required persistence operations and selected queries for catalog searching, role lookup, member records, reservation ordering, active loans, fine accruals and purchase suggestion history.
+
+An entity graph is used for retrieving application users together with their assigned roles.
+
+The required measured N+1 demonstration and SQL comparison remain pending.
+
+### Book Title Management
+
+The application includes Spring MVC and Thymeleaf workflows for:
+
+- Listing book titles.
+- Searching, filtering, sorting and pagination.
+- Creating book titles.
+- Viewing book title details.
+- Editing book title information.
+- Assigning and updating categories.
+- Selecting the primary category.
+- Handling invalid form submissions.
+- Handling missing book titles.
+- Displaying flash messages after successful operations.
+
+The implementation uses:
+
+- `BookCatalogQueryService`
+- `BookTitleService`
+- `BookTitleServiceImpl`
+- `CategoryQueryService`
+- `BookCatalogController`
+- `BookTitleManagementController`
+
+Form objects and service DTOs separate the web layer from JPA entities.
+
+Book Title deactivation is implemented in the service layer. The complete parent CRUD screen requirement, including the appropriate deletion or deactivation workflow, requires a final M2 review.
+
+### Physical Copy Management
+
+The application includes physical-copy administration through the Book Title Details interface.
+
+Implemented operations include:
+
+- Add Physical Copy.
+- Edit Physical Copy.
+- Withdraw Physical Copy.
+- Delete eligible Physical Copy.
+- Release Physical Copy from Maintenance.
+
+The implementation includes:
+
+- `BookCopyService`
+- `BookCopyServiceImpl`
+- `BookCopyManagementController`
+- `BookCopyForm`
+- `BookCopyCommand`
+- `BookCopyDetails`
+
+The service layer enforces inventory validation, permitted administrative operations, historical-reference restrictions and maintenance-release conditions.
+
+Physical-copy modifications use pessimistic locking where appropriate.
+
+Withdrawal and deletion use separate confirmation pages. State-changing operations use POST requests.
+
+Physical-copy inventory is displayed in a table with horizontal scrolling on narrow screens.
+
+The user interface was manually reviewed for creation, editing, release, withdrawal, deletion, validation, protected statuses and responsive behavior.
+
+### Persistence and Application Tests
+
+The project contains automated tests covering:
+
+- Catalog entity relationships and database constraints.
+- Book Title services and MVC workflows.
+- Physical-copy validation.
+- Physical-copy creation and retrieval.
+- Physical-copy metadata updates.
+- Withdrawal and deletion restrictions.
+- Maintenance release.
+- Acquisition-date validation.
+- User and role persistence.
+- Circulation persistence and constraints.
+- Purchase suggestion persistence.
+- AI analysis result history and PostgreSQL JSONB mapping.
+
+The circulation persistence tests include duplicate active-loan rejection, reservation ordering, fine accrual uniqueness and optimistic-lock behavior.
+
+The purchase suggestion tests verify member ownership, librarian review information, status queries, multiple AI results and JSONB serialization and retrieval.
+
+**Latest local verification:** `./mvnw clean verify` completed successfully with 158 passing tests.
+
+These tests establish the functionality currently implemented. They do not establish that the planned circulation, security or live AI workflows are complete.
+
+Further testing required by the professor includes repository slice tests, Testcontainers integration tests, deterministic AI stub tests, service-package coverage measurement and concurrency verification.
 
 ## 7. M2 High-Fidelity Figma Prototype
 
-The M2 UI/UX work builds on the preserved M1 wireframes and provides a visual foundation for the planned Spring MVC and Thymeleaf application.
+The M2 UI/UX work builds on the preserved M1 wireframes and provides a visual foundation for the Spring MVC and Thymeleaf application.
 
 The Figma file contains three main pages:
 
@@ -266,26 +474,37 @@ A native Figma prototype demonstrates the librarian's catalog-management workflo
 
 Cancel navigation was also connected. The developer tested the main navigation flow successfully in Figma presentation mode.
 
-The prototype demonstrates intended navigation rather than working backend functionality. Form submissions do not persist records, and the application services have not yet been implemented.
+The prototype demonstrates intended navigation rather than working backend functionality. Form submissions inside Figma do not persist records.
 
-### Planned Thymeleaf Template Mapping
+The corresponding catalog and physical-copy workflows have since been implemented separately in the Spring Boot application.
 
-The following mapping will guide the future Spring MVC implementation. These template files have not yet been created.
+### Thymeleaf Template Mapping
 
-| Figma frame | Planned Thymeleaf template |
-|---|---|
-| Book Catalog | `templates/librarian/books/list.html` |
-| Edit Book Title | `templates/librarian/books/form.html` |
-| Book Title Details & Physical Copies | `templates/librarian/books/details.html` |
-| Book Catalog — Empty Results | `templates/librarian/books/list.html` with an empty-result state |
-| Edit Book Title — Validation Errors | `templates/librarian/books/form.html` with validation errors |
-| AI-Assisted Purchase Suggestion Review | `templates/librarian/acquisitions/review.html` |
-| Book Catalog — Mobile 390 | Responsive CSS for `templates/librarian/books/list.html` |
-| Edit Book Title — Mobile 390 | Responsive CSS for `templates/librarian/books/form.html` |
+The following table maps the approved Figma designs to the current or planned Thymeleaf implementation.
 
-The empty-results and validation-error designs represent states of existing templates, not separate pages. Mobile variants will use the same server-rendered templates with responsive styling.
+| Figma frame | Thymeleaf implementation | Status |
+|---|---|---|
+| Book Catalog | `templates/catalog/list.html` | Implemented |
+| Edit Book Title | `templates/catalog/edit.html` | Implemented |
+| Book Title Details & Physical Copies | `templates/catalog/details.html` | Implemented |
+| Book Catalog — Empty Results | `templates/catalog/list.html` | Implemented |
+| Edit Book Title — Validation Errors | `templates/catalog/edit.html` | Implemented |
+| AI-Assisted Purchase Suggestion Review | Acquisitions review template | Planned |
+| Book Catalog — Mobile 390 | Responsive catalog layout | Implemented |
+| Edit Book Title — Mobile 390 | Responsive Book Title form | Implemented |
 
-The eventual implementation will separate controllers, services, repositories, DTOs and form objects. JPA entities will not be exposed directly to Thymeleaf forms.
+Additional Physical Copy templates include:
+
+- `templates/catalog/copies/create.html`
+- `templates/catalog/copies/edit.html`
+- `templates/catalog/copies/withdraw.html`
+- `templates/catalog/copies/delete.html`
+
+The actual application uses a shared catalog workspace and reusable layout fragments.
+
+The implementation follows the approved visual design while adapting certain interactions to the requirements of the working application.
+
+The Physical Copy inventory retains a horizontally scrollable table on mobile instead of introducing a separate card layout.
 
 ### Accessibility Review
 
@@ -316,7 +535,7 @@ The review does not establish full WCAG compliance. Keyboard navigation, screen-
 - [UI/UX design rationale and accessibility review](docs/design-rationale.md)
 - [AI usage and verification log](docs/ai-usage.md)
 
-The developer exported an eight-page high-fidelity prototype PDF and visually checked the two mobile frames on its final pages. The complete PDF file has not been independently inspected in this review.
+The developer exported an eight-page high-fidelity prototype PDF and visually checked the two mobile frames on its final pages.
 
 The Figma link is recorded, but anonymous or public viewing permissions still require verification.
 
@@ -379,14 +598,14 @@ Do not commit passwords, API keys or other credentials.
 From the repository root, run:
 
 ```bash
-./mvnw verify
+./mvnw clean verify
 ```
 
-The test suite currently contains four tests, including three catalog repository integration tests and one Spring Boot application context test.
+The current test suite contains 158 tests, including domain validation tests, service tests, MVC tests and PostgreSQL integration tests.
 
-These tests require a running PostgreSQL database and a valid `DB_PASSWORD` environment variable.
+The integration tests require a running PostgreSQL database and a valid `DB_PASSWORD` environment variable.
 
-The full suite has passed locally through Maven and IntelliJ.
+The full suite has passed locally through Maven.
 
 ### Run the Application
 
@@ -400,7 +619,15 @@ Alternatively, run `LibraryLendingSystemApplication` from IntelliJ IDEA.
 
 The application uses port `8080`.
 
-**Current limitation:** No web controllers or Thymeleaf pages have been implemented yet. An HTTP 404 response at `http://localhost:8080/` is expected at the current stage.
+The catalog is available at:
+
+```text
+http://localhost:8080/catalog
+```
+
+The current application supports catalog browsing and Book Title and Physical Copy management.
+
+Authentication and role-based access restrictions have not yet been implemented.
 
 ## 9. Continuous Integration
 
@@ -421,7 +648,9 @@ The workflow:
 
 The PostgreSQL service uses port 5432 in the GitHub Actions environment. The application datasource URL is overridden through `DB_URL`, so the workflow does not require changes to the local port 5433 configuration.
 
-**Verified result:** The initial GitHub Actions workflow completed successfully with all four tests passing.
+**Latest verified checkpoint:** The developer reported a successful GitHub Actions run after the purchase suggestion and AI result persistence implementation was pushed in commit `507ec60`.
+
+The associated local Maven verification completed with 158 passing tests.
 
 The current workflow performs continuous integration only. Automatic production deployment is planned for a later milestone.
 
@@ -453,9 +682,16 @@ library-lending-system/
 │   ├── main/
 │   │   ├── java/hr/algebra/librarylendingsystem/
 │   │   │   ├── domain/
-│   │   │   └── repository/
+│   │   │   ├── repository/
+│   │   │   ├── service/
+│   │   │   └── web/
 │   │   └── resources/
 │   │       ├── db/migration/
+│   │       ├── static/css/
+│   │       ├── templates/
+│   │       │   ├── catalog/
+│   │       │   │   └── copies/
+│   │       │   └── fragments/
 │   │       └── application.properties
 │   └── test/
 │       └── java/hr/algebra/librarylendingsystem/
@@ -467,7 +703,9 @@ library-lending-system/
 └── README.md
 ```
 
-The structure includes the locally prepared M2 design documentation. Additional packages, mappings, templates, tests and deployment files will be added incrementally.
+The structure contains the implemented M2 persistence and web application packages.
+
+Additional security, REST, AI integration, scheduling and deployment components will be added during subsequent milestones.
 
 ## 11. Development Roadmap
 
@@ -484,11 +722,18 @@ The structure includes the locally prepared M2 design documentation. Additional 
 
 ### M2 — Persistence and Catalog CRUD
 
-Completed or prepared:
+Implemented:
 
 - Flyway V1-V3 database migrations and reference data.
-- Initial catalog JPA entities and repositories.
-- Catalog persistence integration tests.
+- Catalog JPA entities and repositories.
+- User and role persistence.
+- Loan, reservation and fine persistence mappings.
+- Purchase suggestion and AI analysis result persistence.
+- Catalog browsing, searching, filtering, sorting and pagination.
+- Book Title creation, details and editing.
+- Physical Copy creation, editing, maintenance release, withdrawal and deletion.
+- Domain validation and service-layer business rules for physical-copy administration.
+- MVC and PostgreSQL integration tests.
 - GitHub Actions build-and-test workflow.
 - High-fidelity Figma screens and reusable components.
 - Responsive desktop and mobile design variants.
@@ -496,29 +741,39 @@ Completed or prepared:
 - Design contrast review and rationale.
 - Eight-page prototype PDF export.
 
-Next steps:
+Remaining M2 work:
 
-- Verify final Figma documentation, sharing permissions and repository changes.
-- Complete catalog business services and parent-child CRUD screens.
-- Complete the remaining JPA mappings and persistence tests.
-- Prepare and review M2 implementation evidence.
+- Review complete parent-child CRUD coverage against the professor's specification.
+- Address any missing Book Title management operations or web workflows.
+- Verify remaining M2 deliverables and implementation evidence.
+- Synchronize project documentation with the verified implementation.
+
+**Status:** Implementation substantially complete. Final requirements review pending.
 
 ### M3 — Security, REST API and AI
 
 Planned:
 
-- Spring Security with three roles and service-level authorization.
-- Validation and protected web operations.
-- Aggregate REST endpoints with DTOs, pagination, status codes and ProblemDetail.
+- Spring Security 7 with three roles and service-level authorization.
+- Form-based authentication, BCrypt and CSRF protection.
+- Protected member, librarian and administrator operations.
+- REST API for the Book Title and Physical Copy aggregate.
+- DTOs, validation, pagination, sorting and ProblemDetail responses.
 - OpenAPI documentation.
-- AI provider abstraction, deterministic stub and initial evaluation cases.
-- AI-assisted purchase-suggestion review.
+- AI provider abstraction and deterministic test stub.
+- Initial Google Gemini integration.
+- AI-assisted purchase suggestion review.
+- Initial AI evaluation cases.
+
+Circulation services and member workflows will also be scheduled according to their dependencies.
 
 ### M4 — Testing, Scheduling and Deployment
 
 Planned:
 
-- Additional JUnit and Mockito service tests, MVC tests and Testcontainers integration tests.
+- Complete remaining circulation, reservation and fine-processing workflows.
+- Additional service unit tests, MVC slice tests and repository slice tests.
+- Testcontainers integration tests.
 - JaCoCo verification of at least 80% service-package line coverage.
 - Croatian and English internationalization.
 - Two scheduled jobs with safe execution and recovery behavior.
@@ -531,11 +786,13 @@ Planned:
 Planned:
 
 - Complete documentation and three ADRs.
-- AI evaluation documentation.
+- AI evaluation documentation with at least ten real test cases.
 - Final review of the Figma prototype PDF and design rationale.
 - Coverage report.
+- Measured performance improvement evidence.
 - Working deployment and demo accounts.
-- Application recording and defense preparation.
+- Ten-minute application recording.
+- Defense preparation.
 
 ## 12. Architecture and AI Documentation
 
@@ -552,9 +809,13 @@ AI-generated material is reviewed by the developer. Implementation details, test
 
 ADR-002, ADR-003 and the required AI evaluation document will be prepared during their corresponding development phases.
 
+ADR-002 will address AI integration, structured output and human review.
+
+ADR-003 will address reliable scheduled processing, locking and recovery behavior.
+
 ## 13. Current Project Status
 
-**Milestone:** M2 implementation in progress.
+**Milestone:** M2 implementation substantially complete; final compliance review pending.
 
 **Implemented and verified:**
 
@@ -563,10 +824,19 @@ ADR-002, ADR-003 and the required AI evaluation document will be prepared during
 - Spring Boot datasource configuration and startup.
 - Twelve application tables through Flyway.
 - Three database migrations and permanent reference data.
-- Initial catalog JPA entities and four repositories.
-- Three catalog repository integration tests and the application context test.
-- Four passing tests through IntelliJ and Maven.
-- GitHub Actions CI with a successful four-test build.
+- Catalog JPA entities and repositories.
+- User and role persistence mappings and repositories.
+- Loan, reservation and fine persistence mappings and repositories.
+- Purchase suggestion and AI analysis result persistence.
+- PostgreSQL JSONB mapping for AI recommendations.
+- Catalog query functionality with search, filtering, sorting and pagination.
+- Book Title creation, details and editing.
+- Physical Copy creation, editing, withdrawal, safe deletion and maintenance release.
+- Service-level validation and locking for physical-copy administration.
+- Spring MVC and Thymeleaf catalog management interfaces.
+- Responsive catalog and physical-copy management layouts.
+- 158 passing automated tests through local Maven verification.
+- GitHub Actions CI, including a successful run reported after commit `507ec60`.
 
 **Prepared and reviewed:**
 
@@ -577,20 +847,30 @@ ADR-002, ADR-003 and the required AI evaluation document will be prepared during
 - Eight high-fidelity Figma screens, including two mobile variants.
 - Reusable component library and clickable prototype.
 - Numerical contrast audit and design rationale.
-- Eight-page prototype PDF export, pending full-file inspection.
+- Eight-page prototype PDF export.
 - AI provider and deployment decisions.
+
+**Remaining M2 review:**
+
+- Complete parent-child CRUD requirements.
+- Book Title deactivation or deletion interface.
+- Final milestone compliance verification.
+- Documentation synchronization.
 
 **Not yet implemented:**
 
-- Remaining JPA entity mappings and repositories.
-- Catalog business services and CRUD screens.
 - Authentication and authorization.
 - REST API and OpenAPI.
-- Member and librarian circulation workflows.
-- AI API integration and evaluation.
-- Scheduled fine accrual and reservation expiry.
+- Member dashboard and account management workflows.
+- Librarian checkout and return.
+- Loan renewal services.
+- Reservation allocation and expiration.
+- Overdue fine calculation and reconciliation.
+- Purchase suggestion submission and review services.
+- Live Google Gemini integration and evaluation.
+- Scheduled processing.
 - Internationalization.
 - Application containerization and production deployment.
-- Final testing, coverage and performance evidence.
+- Required Testcontainers tests, coverage reports and performance evidence.
 
-The project is developed incrementally. Prepared designs and planned features are not presented as verified application functionality.
+The project is developed incrementally. Implemented persistence mappings are not treated as completed business workflows, and prepared designs are not presented as verified application functionality.

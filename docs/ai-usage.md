@@ -3,7 +3,7 @@
 **Project:** P03 Library Lending System  
 **Course:** Rapid Development of Java Applications Using Programming Frameworks (2026/27)  
 **Started:** 2026-10-29  
-**Last updated:** 2026-11-13
+**Last updated:** 2026-11-14
 
 ## M1 — Planning and project setup
 
@@ -312,12 +312,51 @@
 - **Date:** 2026-11-12 to 2026-11-13.
 - **Task:** Complete librarian-facing Physical Copy management with inventory listing, creation, editing, maintenance release, withdrawal and safe deletion.
 - **AI assistance:** Proposed the Spring MVC controller endpoints, Thymeleaf forms, inventory table, confirmation screens and associated MVC and integration tests. Helped identify and correct future acquisition-date acceptance, duplicate field-error messages and the visual appearance of the Delete action.
-- **Developer work:** Implemented the changes in IntelliJ, reviewed the application against the approved Figma design, disabled Dark Reader for the local application after identifying its CSS overrides and verified the actual color palette. Tested the inventory workflow in the browser, including validation, restricted actions, confirmation pages and mobile scrolling. Ran the Maven test suite repeatedly, committed and pushed the completed inventory-management work through withdrawal, and reported passing CI. Subsequently implemented and tested permanent deletion.
+- **Developer work:** Implemented the changes in IntelliJ, reviewed the application against the approved Figma design, disabled Dark Reader for the local application after identifying its CSS overrides and verified the actual color palette. Tested the inventory workflow in the browser, including validation, restricted actions, confirmation pages and mobile scrolling. Ran the Maven test suite repeatedly, committed and pushed the completed inventory-management work.
 - **Changes and decisions:** Reused Book Copy service operations and DTOs instead of putting business rules in controllers. Kept creation and editing separate from circulation. Made acquisition dates optional but not future-dated. Added confirmation pages for withdrawal and deletion and POST endpoints for state changes. Kept the horizontally scrollable mobile inventory table instead of adding separate cards. Used neutral styling for Edit and Withdraw, green for Release and red for Delete.
-- **Verification:** The developer reported successful automated tests and manual checks for inventory listing, Add, Edit, Release, Withdraw and Delete. Manual checks included status changes, inventory counts, error feedback, cancellation, protected statuses and responsive layout. The developer confirmed that the final red Delete button styling was corrected and that the full test suite passed. The preceding inventory-management checkpoint was pushed and CI passed. The final deletion and documentation changes have not yet been committed.
+- **Verification:** The developer reported successful automated tests and manual checks for inventory listing, Add, Edit, Release, Withdraw and Delete. Manual checks included status changes, inventory counts, error feedback, cancellation, protected statuses and responsive layout. The developer confirmed that the final red Delete button styling was corrected and that the full test suite passed. The completed implementation was pushed, and GitHub Actions passed as reported by the developer.
 - **Limitations:** A read-only join between `BookCopies` and `Loans` returned no rows in the local development database. Therefore, deletion rejection due specifically to existing loan history was not demonstrated manually. Service integration tests cover historical-reference restrictions. Concurrent circulation operations and authorization remain future work.
 - **Files:** `BookCopyManagementController.java`, `BookCopyForm.java`, `BookCopyService.java`, `BookCopyServiceImpl.java`, `BookTitleManagementController.java`, `BookTitleManagementControllerTests.java`, `BookCopyManagementControllerTests.java`, `BookCopyEditControllerTests.java`, `BookCopyReleaseControllerTests.java`, `BookCopyWithdrawControllerTests.java`, `BookCopyDeleteControllerTests.java`, `BookCopyAcquisitionDateIntegrationTests.java`, `BookCopyLookupIntegrationTests.java`, `templates/catalog/details.html`, `templates/catalog/copies/create.html`, `templates/catalog/copies/edit.html`, `templates/catalog/copies/withdraw.html`, `templates/catalog/copies/delete.html`, `static/css/book-copy-list.css` and `static/css/book-copy-actions.css`.
-- **Remaining work:** Commit and push the safe deletion workflow, verify CI and compare the completed inventory work against the professor's M2 specification.
+- **Git commit:** `93d529d` (`complete and document physical copy management`).
+- **Remaining work:** Review the completed parent-child CRUD workflows against the professor's M2 requirements.
+
+## M2 — Remaining persistence mappings
+
+### AI-029 — Implement User and Role persistence
+
+- **Date:** 2026-11-13.
+- **Task:** Implement the remaining user and role JPA mappings, repositories and persistence integration tests.
+- **AI assistance:** Reviewed the existing `AppUsers`, `Roles` and `UserRoles` tables and proposed the `AppUser` and `Role` entities, repository methods and integration tests. Explained case-insensitive email uniqueness, lazy role associations and loading roles for future authentication.
+- **Developer work:** Implemented the entities, repositories and tests in IntelliJ. Reviewed the mappings against the existing Flyway schema, ran Maven verification and committed the completed step.
+- **Changes and decisions:** Used a many-to-many relationship through the existing `UserRoles` table without creating an unnecessary association entity. Normalized user emails to lowercase and used an entity graph to retrieve users together with their roles when required.
+- **Verification:** Eight repository integration tests passed, covering user persistence, email lookup, duplicate email rejection, seeded roles, multiple role assignments, association removal and entity-graph loading. The developer reported successful local verification and GitHub Actions passed after the commit was pushed.
+- **Files:** `AppUser.java`, `Role.java`, `AppUserRepository.java`, `RoleRepository.java`, `AppUserRepositoryIntegrationTests.java`.
+- **Git commit:** `9838fdd` (`implement and test user and role persistence`).
+- **Remaining work:** Implement authentication, password hashing, authorization and account management services.
+
+### AI-030 — Implement circulation persistence mappings
+
+- **Date:** 2026-11-13.
+- **Task:** Implement JPA mappings and repositories for reservations, loans and daily fine accruals.
+- **AI assistance:** Reviewed the existing database schema and constraints, prepared entity mappings and repository methods, and proposed integration tests for persistence, uniqueness constraints and optimistic locking. Discussed the difference between database integrity and future transactional circulation operations.
+- **Developer work:** Implemented the classes and tests in IntelliJ, ran the full Maven verification and committed the completed persistence step.
+- **Changes and decisions:** Introduced `ReservationStatus`, `Reservation`, `Loan` and `FineAccrual`. Used lazy relationships, separate issuing and returning librarian references, `BigDecimal` for fine amounts and `@Version` for optimistic locking on loans. Preserved the existing Flyway schema.
+- **Verification:** Nine integration tests passed, covering reservation persistence and FIFO ordering, duplicate active reservations, loan persistence, duplicate active loans, optimistic-lock version updates, stale-update rejection, fine accrual persistence and duplicate daily fine rejection. The developer reported successful local verification and GitHub Actions passed after the commit was pushed.
+- **Files:** `ReservationStatus.java`, `Reservation.java`, `Loan.java`, `FineAccrual.java`, `ReservationRepository.java`, `LoanRepository.java`, `FineAccrualRepository.java`, `CirculationRepositoryIntegrationTests.java`.
+- **Git commit:** `54775c2` (`implement and test circulation persistence mappings`).
+- **Remaining work:** Implement checkout, return, renewal, reservation allocation, fine calculation and scheduled processing services.
+
+### AI-031 — Implement Purchase Suggestion and AI Result persistence
+
+- **Date:** 2026-11-14.
+- **Task:** Complete the remaining JPA mappings and repositories for purchase suggestions and their associated AI analysis results.
+- **AI assistance:** Reviewed the existing Flyway tables, entity conventions and repository implementations. Prepared `PurchaseSuggestion` and `AiSuggestionResult` entities, status enums, repository methods and eight PostgreSQL integration tests. Helped diagnose JSON mapping compatibility and a timestamp-precision test failure.
+- **Developer work:** Implemented the classes in IntelliJ and ran Maven verification after each step. Reported that the initial Jackson `JsonNode` import could not be resolved. Requested a correction based on the project's actual dependencies and existing conventions. Implemented the revised JSONB mapping and repository tests, corrected the timestamp assertion and repeated full verification.
+- **Changes and decisions:** Used `PurchaseSuggestionStatus` values `PENDING`, `APPROVED` and `REJECTED`, and `AiProcessingStatus` values `PENDING`, `COMPLETED` and `FAILED`. Retained optional reviewer information and separate AI processing status. Replaced the initial Jackson 2 `JsonNode` approach with `List<Map<String, Object>>` and Hibernate's `@JdbcTypeCode(SqlTypes.JSON)` for PostgreSQL JSONB columns. No new dependencies or Flyway migration were required.
+- **Verification:** Eight integration tests were added for purchase suggestion persistence, member history, status filtering, librarian review information, pending AI results, JSONB serialization and retrieval, multiple analysis results and processing-status queries. The initial run had one failed assertion because PostgreSQL stored the review timestamp with microsecond precision. The test timestamp was truncated to microseconds, and the developer subsequently reported all 158 tests passing with `./mvnw clean verify`. The implementation was committed and pushed, and the developer reported that GitHub Actions passed.
+- **Files:** `PurchaseSuggestion.java`, `PurchaseSuggestionStatus.java`, `AiSuggestionResult.java`, `AiProcessingStatus.java`, `PurchaseSuggestionRepository.java`, `AiSuggestionResultRepository.java`, `PurchaseSuggestionRepositoryIntegrationTests.java`.
+- **Git commit:** `507ec60` (`implement and test purchase suggestion and AI result persistence`).
+- **Remaining work:** Implement member submission, AI processing, librarian review, provider integration and deterministic AI stub tests.
 
 ## Verification summary
 
@@ -409,16 +448,41 @@
 | Design review | Local Dark Reader overrides identified and disabled; underlying green and ivory palette confirmed. |
 | Historical deletion protection | Service tests cover historical references; no matching loan records found during manual SQL inspection. |
 | Local build | Full Maven verification reported passing after the final Delete styling correction. |
-| Git and CI | Inventory-management work through withdrawal pushed and CI passed. Delete changes pending commit and CI. |
+| Git and CI | Completed Physical Copy management committed and pushed; GitHub Actions passed as reported by the developer. |
+
+### M2 — Remaining persistence verification, 2026-11-13 to 2026-11-14
+
+| Area | Verified result |
+|---|---|
+| User and Role persistence | Eight PostgreSQL integration tests passed. |
+| User role associations | Multiple role assignments and association removal tested. |
+| User email uniqueness | Case-insensitive lookup and duplicate rejection tested. |
+| User role fetching | Entity-graph retrieval tested. |
+| Circulation persistence | Nine PostgreSQL integration tests passed. |
+| Reservation persistence | FIFO ordering and duplicate active reservation rejection tested. |
+| Loan persistence | Active-loan uniqueness and optimistic-lock behavior tested. |
+| Fine persistence | Daily accrual persistence and duplicate date rejection tested. |
+| Purchase Suggestion persistence | Member associations, review information and status queries tested. |
+| AI Result persistence | Pending results, multiple analysis records and processing-status queries tested. |
+| JSONB mapping | Structured category and duplicate-candidate data saved and retrieved from PostgreSQL. |
+| Timestamp precision | Review timestamp test corrected to use PostgreSQL microsecond precision. |
+| Full Maven verification | 158 tests passed with `./mvnw clean verify`, as reported by the developer. |
+| Git | Commits `9838fdd`, `54775c2` and `507ec60` pushed to `main`. |
+| Continuous integration | GitHub Actions passed after the latest persistence commit, as reported by the developer. |
+| Database migrations | No new migrations required for Steps 19.3A–19.3C. |
 
 ## Remaining work
 
-The database migrations, permanent reference data, catalog JPA mappings, repositories, Book Title management screens, Book Copy service operations, physical-copy management screens, integration tests and GitHub Actions CI workflow are in place.
+The database migrations, permanent reference data, JPA mappings, repositories, Book Title management screens, Book Copy service operations, physical-copy management screens, integration tests and GitHub Actions CI workflow are in place.
 
-The remaining application tables still require Java mappings and repositories. Circulation workflows, security, REST API, Gemini integration, scheduling, internationalization and deployment remain pending.
+All 12 application tables have the required JPA persistence mappings, including the `UserRoles` join table represented through the existing many-to-many relationship. The remaining persistence work concerns future application features rather than unmapped tables.
+
+The final M2 review must confirm the professor's full parent-child CRUD requirement, particularly the Book Title deletion or deactivation workflow exposed through the web interface.
+
+Circulation services, security, REST API, Gemini integration, scheduling, internationalization and deployment remain pending.
 
 Additional test categories, concurrency verification, service coverage and performance measurements are also required. No coverage percentages, AI evaluation scores or production deployment results have been claimed.
 
 The M2 Figma work includes reusable components, desktop and mobile screens, a clickable prototype, contrast measurements, design rationale and PDF export. The implemented application's accessibility and functional behavior must be tested separately from the prototype.
 
-The physical-copy management workflow is locally verified through deletion. The remaining immediate checkpoint is to commit and push deletion and documentation, confirm GitHub Actions and review milestone requirements.
+The next checkpoint is to complete the M2 requirements review, address any missing functionality and synchronize the remaining project documentation before moving into M3.
